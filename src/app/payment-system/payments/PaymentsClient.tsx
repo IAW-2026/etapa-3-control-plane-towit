@@ -74,7 +74,8 @@ export default function PaymentsClient({ data }: PaymentsClientProps) {
 		{
 			label: "Viaje (Trip ID)",
 			accessorKey: "trip_id",
-			fullWidth: true // Obligamos a que ocupe todo el ancho para que no se corte visualmente
+			fullWidth: true, // Obligamos a que ocupe todo el ancho para que no se corte visualmente
+			hrefTemplate: "/payment-system/payments?search={trip_id}" // Al hacer click, nos lleva a la página del viaje correspondiente
 		},
 		{
 			label: "Usuario ID",

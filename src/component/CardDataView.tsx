@@ -10,8 +10,9 @@ export type FieldDef<T> = {
   label: string;
   accessorKey?: keyof T;
   cell?: (row: T) => React.ReactNode;
-  isPrimary?: boolean;  // Destaca este campo como el título principal de la tarjeta
-  fullWidth?: boolean;  // Obliga a que el campo ocupe todo el ancho (ideal para IDs largos o Fechas)
+  isPrimary?: boolean;  
+  fullWidth?: boolean;  
+  hrefTemplate?: string; 
 };
 
 export type ActionDef = {
