@@ -12,7 +12,7 @@ export default clerkMiddleware(async (auth, req) => {
     if (!isPublicRoute(req)) {
         // Protects all routes except the public ones. If the user is not authenticated, it will redirect to the sign-in page.
         await auth.protect();
-        if (sessionClaims?.role === "admin") {
+        if (sessionClaims?.role !== "admin") {
             return NextResponse.rewrite(new URL('/404', req.url));
         }
     }

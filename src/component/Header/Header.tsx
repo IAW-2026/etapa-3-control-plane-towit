@@ -10,6 +10,7 @@ import HeaderLogo from "./HeaderLogo";
 export default async function Header() {
 	const { sessionClaims } = await auth();
 	if (sessionClaims?.role == "admin") {
+		console.log("Usuario admin autenticado. Mostrando menú de administración de pagos.");	
 		const paymentsDropdownItems: DropdownItem[] = [
 			{ label : "Pagos", href: "/payment-system/payments", colorClass: "bg-blue-600" },
 			{ label : "Liquidaciones", href: "/payment-system/disbursements", colorClass: "bg-purple-600" },
@@ -31,8 +32,9 @@ export default async function Header() {
 							<HeaderDropdown 
 								title="Administrar sistema de pagos" 
 								items={[
-									{ label: "Usuarios", href: "/admin/users", colorClass: "bg-green-600" },
-									{ label: "Configuración", href: "/admin/settings", colorClass: "bg-yellow-600" }
+									{ label : "Pagos", href: "/payment-system/payments", colorClass: "bg-blue-600" },
+									{ label : "Liquidaciones", href: "/payment-system/disbursements", colorClass: "bg-purple-600" },
+									{ label : "Reembolsos", href: "/payment-system/refunds", colorClass: "bg-orange-600" },
 								]}
 							/>
 						)}
