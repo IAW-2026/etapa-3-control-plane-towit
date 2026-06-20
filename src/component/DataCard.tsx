@@ -1,5 +1,6 @@
 import React from 'react';
-import { FieldDef } from './CardDataView'; // Importamos los tipos desde tu vista principal
+import Link from 'next/link'; // Importante para Next.js
+import { FieldDef } from './CardDataView';
 
 interface DataCardProps<T> {
   item: T;
@@ -33,16 +34,35 @@ export default function DataCard<T>({ item, fields, isSelected, onToggle }: Data
           const isPrimary = field.isPrimary;
           const isFullWidth = field.fullWidth || isPrimary;
           
+          // 1. Calculamos el contenido base (ya sea custom o el valor directo)
+          let content = field.cell ? field.cell(item) : String(item[field.accessorKey as keyof T] ?? 'N/A');
+
+          // 2. Si el campo definió un template, resolvemos la URL y envolvemos el contenido
+          if (field.hrefTemplate) {
+            // Busca cualquier texto entre llaves {key} y lo reemplaza por item[key]
+            const resolvedHref = field.hrefTemplate.replace(/{(\w+)}/g, (_, key) => {
+              return String(item[key as keyof T] ?? '');
+            });
+
+            content = (
+              <Link 
+                href={resolvedHref}
+                // Evita que al hacer click en el link, se seleccione la tarjeta
+                onClick={(e) => e.stopPropagation()} 
+                className="text-indigo-600 hover:text-indigo-800 hover:underline transition-colors inline-block w-fit"
+              >
+                {content}
+              </Link>
+            );
+          }
+
           return (
             <div key={idx} className={`flex flex-col gap-1 ${isFullWidth ? 'col-span-2' : 'col-span-1'}`}>
               <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
                 {field.label}
               </span>
               <div className={`text-sm break-words ${isPrimary ? 'text-lg font-bold text-slate-900' : 'text-slate-700 font-medium'}`}>
-                {/* Evaluamos si existe un renderizado custom (cell). 
-                  Si no, mostramos el valor en crudo desde el accessorKey.
-                */}
-                {field.cell ? field.cell(item) : String(item[field.accessorKey as keyof T] ?? 'N/A')}
+                {content}
               </div>
             </div>
           );
