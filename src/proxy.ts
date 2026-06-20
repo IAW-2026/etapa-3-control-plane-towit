@@ -6,10 +6,15 @@ const isPublicRoute = createRouteMatcher(['/', '/api/(.*)']);
 
 export default clerkMiddleware(async (auth, req) => {
     // Get authentication information about the current user
-    const { userId } = await auth();
+    // En la última versión, auth() es asíncrono. Extraemos también sessionClaims para el rol.
+    const { userId, sessionClaims } = await auth();
 
     if (!isPublicRoute(req)) {
+        // Protects all routes except the public ones. If the user is not authenticated, it will redirect to the sign-in page.
         await auth.protect();
+        if (sessionClaims?.role === "admin") {
+            return NextResponse.rewrite(new URL('/404', req.url));
+        }
     }
 
 });
