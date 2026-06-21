@@ -7,10 +7,8 @@ export default function HeaderLogo() {
       href="/" 
       className="flex items-center gap-3 group focus:outline-none rounded-xl focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
     >
-      {/* ÍCONO: Siempre visible. Mantiene un tamaño fijo para no deformarse */}
-      <div className="w-10 h-10 min-w-[40px] rounded-xl bg-slate-900 flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all duration-200 overflow-hidden">
-        <img src="/TowitLogo.svg" alt="TowIt" className="w-full h-full object-contain" />
-      </div>
+      {/* ÍCONO: Siempre visible. El SVG ya tiene su propio círculo */}
+      <img src="/TowitLogo.svg" alt="TowIt" className="w-10 h-10 min-w-[40px] group-hover:scale-105 transition-all duration-200" />
       
       {/* TEXTO: hidden (oculto en móvil) y sm:block (visible desde tablets en adelante) */}
       <div className="hidden sm:block leading-tight">

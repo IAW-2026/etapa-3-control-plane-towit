@@ -18,6 +18,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Panel de Control - TowIt",
   description: "Plataforma administrativa para la gestión de pagos de TowIt",
+  icons: {
+    icon: "/TowitLogo.svg",
+  },
 };
 
 export default async function RootLayout({
