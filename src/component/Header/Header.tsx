@@ -2,21 +2,14 @@
 import Link from "next/link";
 import { Show, SignInButton, UserButton } from "@clerk/nextjs";
 import React from "react";
-import { auth } from "@clerk/nextjs/server";
-import HeaderDropdown, { DropdownItem } from "./HeaderDropdown";
+import { currentUser } from "@clerk/nextjs/server";
+import HeaderDropdown from "./HeaderDropdown";
 import HeaderLogo from "./HeaderLogo";
 
 
 export default async function Header() {
-	const { sessionClaims } = await auth();
-	if (sessionClaims?.role == "admin") {
-		console.log("Usuario admin autenticado. Mostrando menú de administración de pagos.");	
-		const paymentsDropdownItems: DropdownItem[] = [
-			{ label : "Pagos", href: "/payment-system/payments", colorClass: "bg-blue-600" },
-			{ label : "Liquidaciones", href: "/payment-system/disbursements", colorClass: "bg-purple-600" },
-			{ label : "Reembolsos", href: "/payment-system/refunds", colorClass: "bg-orange-600" },
-		];
-	}
+	const user = await currentUser();
+	const role = user?.publicMetadata?.role as string | undefined;
 
 	return (
 		<header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
@@ -28,15 +21,26 @@ export default async function Header() {
 					{/* MENUES DESPLEGABLES: Solo se muestra si el usuario está logueado */}
 					<Show when="signed-in">
 
-						{sessionClaims?.role == "admin" && (
-							<HeaderDropdown 
-								title="Administrar sistema de pagos" 
-								items={[
-									{ label : "Pagos", href: "/payment-system/payments", colorClass: "bg-blue-600" },
-									{ label : "Liquidaciones", href: "/payment-system/disbursements", colorClass: "bg-purple-600" },
-									{ label : "Reembolsos", href: "/payment-system/refunds", colorClass: "bg-orange-600" },
-								]}
-							/>
+						{role == "admin" && (
+							<>
+								<HeaderDropdown 
+									title="Sistema de pagos" 
+									items={[
+										{ label : "Pagos", href: "/payment-system/payments", colorClass: "bg-blue-600" },
+										{ label : "Liquidaciones", href: "/payment-system/disbursements", colorClass: "bg-purple-600" },
+										{ label : "Reembolsos", href: "/payment-system/refunds", colorClass: "bg-orange-600" },
+									]}
+								/>
+								<HeaderDropdown 
+									title="TowIt Customer App" 
+									items={[
+										{ label : "Dashboard", href: "/customer-admin/dashboard", colorClass: "bg-indigo-600" },
+										{ label : "Clientes", href: "/customer-admin/customers", colorClass: "bg-emerald-600" },
+										{ label : "Viajes", href: "/customer-admin/trips", colorClass: "bg-cyan-600" },
+										{ label : "Vehículos", href: "/customer-admin/vehicles", colorClass: "bg-amber-600" },
+									]}
+								/>
+							</>
 						)}
 
 					</Show>
