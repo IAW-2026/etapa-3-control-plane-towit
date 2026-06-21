@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from '@clerk/nextjs'
-import { auth } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import Header from "@/component/Header/Header";
 
 const geistSans = Geist({
@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TowIt Payments",
+  title: "Panel de Control - TowIt",
   description: "Plataforma administrativa para la gestión de pagos de TowIt",
 };
 
@@ -26,8 +26,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
 
-  const { sessionClaims } = await auth();
-  const isAdmin = sessionClaims?.role === "admin";
+  const user = await currentUser();
+  const isAdmin = user?.publicMetadata?.role === "admin";
 
   return (
     <html
