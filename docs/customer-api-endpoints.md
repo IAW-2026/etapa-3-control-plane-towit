@@ -25,7 +25,7 @@ interface PaginatedResponse<T> {
 
 ## 1. Dashboard — `GET /api/admin/dashboard`
 
-Devuelve KPIs generales y los últimos 5 viajes.
+Devuelve KPIs generales y los últimos 10 viajes.
 
 ### Response
 
@@ -80,7 +80,7 @@ export async function GET(request: Request) {
     .from(trip)
     .leftJoin(customer, eq(trip.customer_id, customer.customer_id))
     .orderBy(desc(trip.date), desc(trip.time))
-    .limit(5);
+    .limit(10);
 
   return NextResponse.json({
     tripCount: tripCount.count,
