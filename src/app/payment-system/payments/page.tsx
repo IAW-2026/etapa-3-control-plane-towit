@@ -1,6 +1,5 @@
-import PaymentsClient from "./PaymentsClient"; // Importamos el Client Wrapper
+import PaymentsClient from "./PaymentsClient"; 
 import PaginationControls from "@/component/PaginationControls";
-import mockPayments from "./mockData.json"
 
 export const dynamic = 'force-dynamic';
 
@@ -8,27 +7,69 @@ interface PageProps {
  	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
+// 1. Extraemos la lógica de fetch a una función limpia para mantener el componente ordenado
+async function fetchPaymentsData(params: { page: number; limit: number; search?: string; status?: string; sort?: string }) {
+    const baseUrl = process.env.PAYMENTS_SYSTEM_URL; 
+    
+    if (!baseUrl) {
+        throw new Error("CRITICAL: PAYMENTS_SYSTEM_URL no está definida.");
+    }
+
+    const url = new URL(`${baseUrl}/api/payments`);
+    url.searchParams.append("page", params.page.toString());
+    url.searchParams.append("limit", params.limit.toString());
+    
+    if (params.search) url.searchParams.append("search", params.search);
+    if (params.status && params.status !== "ALL") url.searchParams.append("status", params.status);
+    if (params.sort) url.searchParams.append("sort", params.sort);
+
+    // 3. Llamada Server-to-Server (S2S) con la API Key
+    const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': process.env.INTERNAL_API_SECRET || '' // Nuestro pase de seguridad
+        },
+        // Al usar force-dynamic, Next.js por defecto no cacheará este fetch agresivamente,
+        // pero podemos asegurarlo con 'no-store' si es información hiper-crítica.
+        cache: 'no-store' 
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Fallo al obtener pagos del sistema externo:", errorText);
+        throw new Error("No se pudieron cargar los pagos.");
+    }
+
+    // 4. Retornamos la estructura unificada que definimos en el endpoint { data, meta }
+    return response.json(); 
+}
+
 export default async function PaymentsPage(props: PageProps) {
 	const searchParams = await props.searchParams;
 	
+    // Capturamos la intención del usuario desde la URL
 	const page = Number(searchParams.page) || 1;
 	const limit = Number(searchParams.limit) || 25; 
-	const offset = (page - 1) * limit;	
-    const searchQuery = (searchParams.search as string) || undefined;
-    const statusFilter = (searchParams.status as string) || undefined;
-    const sortOption = (searchParams.sort as string) || undefined;
+    const search = (searchParams.search as string) || undefined;
+    const status = (searchParams.status as string) || undefined;
+    const sort = (searchParams.sort as string) || undefined;
 
+    let paginatedPayments = [];
+    let totalPages = 0;
 
-	const [paginatedPayments, [{ totalCount }]] = await Promise.all([
-		//Get all elements for the current page
-        Promise.resolve(mockPayments.slice(offset, offset + limit)),
-    
-        // Simula la Promesa 2: db.select({ totalCount: sql<number>`count(*)` })
-        Promise.resolve([{ totalCount: mockPayments.length }])
- 	]);
-
-	const totalPages = Math.ceil(Number(totalCount) / limit);
-
+    try {
+        // Ejecutamos el fetch pasando todos los parámetros capturados
+        const result = await fetchPaymentsData({ page, limit, search, status, sort });
+        
+        paginatedPayments = result.data;
+        totalPages = result.meta.totalPages;
+        
+    } catch (error) {
+        // Manejo de errores amigable en el servidor
+        console.error("[PaymentsPage] Error:", error);
+        // Podrías renderizar un componente de ErrorState aquí en un caso real
+    }
 
 	return (
 		<div className="max-w-7xl mx-auto p-8">

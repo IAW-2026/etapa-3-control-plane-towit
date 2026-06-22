@@ -1,14 +1,15 @@
 'use client'
 
 import React, { useRef, useState } from "react";
-// Importamos el nuevo componente de tarjetas y sus tipos
 import CardDataView, { FieldDef, ActionDef } from "@/component/CardDataView";
 import ResourceControlBar, { ControlOption } from "@/component/ResourceControlBar";
 import FormModal, { FormFieldDef } from "@/component/FormModal";
 import { createPaymentAction } from "@/actions/payment-system/payment.actions";
 
+// -----------------------------------------------------------------------------
+// 1. TIPOS Y CONSTANTES ESTÁTICAS (Fuera del componente para evitar re-creaciones)
+// -----------------------------------------------------------------------------
 
-// Definimos nuestras "tuplas" de opciones en el componente padre
 const PAYMENT_SORT_OPTIONS: ControlOption[] = [
 	{ label: "Más recientes primero", value: "created_desc" },
 	{ label: "Más antiguos primero", value: "created_asc" },
@@ -23,7 +24,6 @@ const PAYMENT_FILTER_OPTIONS: ControlOption[] = [
 	{ label: "Reembolsado", value: "REFUNDED" },
 ];
 
-// Tipamos estrictamente los datos según tu esquema de base de datos
 export interface PaymentRecord {
 	transaction_id: string;
 	trip_id: string;
@@ -40,65 +40,107 @@ interface PaymentsClientProps {
 	data: PaymentRecord[];
 }
 
-export default function PaymentsClient({ data }: PaymentsClientProps) {
+type ActiveFormAction = 'CREATE_PAYMENT' | null; // Add actions here when they need the form modal
 
-	const [isFormOpen, setIsFormOpen] = useState(false);
-    
-	// MAGIA REACT: Guardamos el "control remoto" de la promesa del CardDataView
+// Estructura estricta que toda acción debe respetar
+interface ActionStrategy {
+	title: string;
+	description: string;
+	submitText: string;
+	fields: FormFieldDef[];
+	execute: (formData: Record<string, any>) => Promise<{ success: boolean; message: string }>;
+}
+
+// -----------------------------------------------------------------------------
+// 2. EL DICCIONARIO DE ESTRATEGIAS (La lógica de negocio aislada)
+// -----------------------------------------------------------------------------
+
+const ACTION_STRATEGIES: Record<Exclude<ActiveFormAction, null>, ActionStrategy> = {
+	CREATE_PAYMENT: {
+		title: "Generar Nuevo Pago",
+		description: "Ingresa los datos para forzar la creación de un registro de pago.",
+		submitText: "Crear Pago",
+		fields: [
+			{ name: "trip_id", label: "ID del Viaje", type: "text", required: true, placeholder: "TRIP-12345" },
+			{ name: "id_user", label: "ID de clerk del Usuario", type: "text", required: true, placeholder: "Ej: user_2Q..." },
+			{ name: "amount", label: "Monto", type: "number", required: true, placeholder: "0.00" },
+		],
+		execute: async (formData) => {
+			return await createPaymentAction(formData);
+		}
+	},
+    // Cuando quieras agregar Refund, solo creas el bloque REFUND_PAYMENT aquí y listo.
+};
+
+// -----------------------------------------------------------------------------
+// 3. EL CONTROLADOR LOGICO (Custom Hook)
+// -----------------------------------------------------------------------------
+
+function usePaymentActions() {
+	const [activeForm, setActiveForm] = useState<ActiveFormAction>(null);
 	const promiseResolver = useRef<((value: { success: boolean; message: string } | null) => void) | null>(null);
 
-	const paymentFormFields: FormFieldDef[] = [
-		{ name: "trip_id", label: "ID del Viaje", type: "text", required: true, placeholder: "TRIP-12345" },
-		{ name: "id_user", label: "ID de clerk del Usuario", type: "text", required: true, placeholder: "Ej: 42" },
-		{ name: "amount", label: "Monto", type: "number", required: true, placeholder: "0.00" },
-	];
-
-	// 1. Manejador del envío del Modal
-	const handleCreatePayment = async (formData: Record<string, any>) => {
-		const result = await createPaymentAction(formData);
-		
-		if (result.success) {
-			// Si el backend lo creó con éxito, ejecutamos el resolver para destrabar 
-            // el botón de CardDataView y que muestre el modal global de éxito.
-			if (promiseResolver.current) {
-				promiseResolver.current({ success: true, message: result.message });
-				promiseResolver.current = null;
-			}
-		}
-		
-        // Siempre retornamos el result a DynamicFormModal.
-        // Si falló (success: false), el DynamicFormModal no se cerrará y mostrará el error en rojo.
-		return result; 
+	const triggerAction = (actionName: ActiveFormAction) => {
+		setActiveForm(actionName);
+		return new Promise<{ success: boolean; message: string } | null>((resolve) => { 
+			promiseResolver.current = resolve; 
+		});
 	};
 
-    // 2. Manejador de cancelación del Modal
-	const handleCloseModal = () => {
-		setIsFormOpen(false);
-		
-        // Si cerramos el modal y la promesa seguía pendiente, la resolvemos con null.
-        // Esto le avisa al CardDataView que apague su estado de "Procesando..." silenciosamente.
+	const closeModal = () => {
+		setActiveForm(null);
 		if (promiseResolver.current) {
-			promiseResolver.current(null);
+			promiseResolver.current(null); // Cancelación silenciosa
 			promiseResolver.current = null;
 		}
 	};
 
-	// 1. Definimos los Campos (Fields) utilizando el nuevo formato de tarjetas
+	const handleFormSubmit = async (formData: Record<string, any>) => {
+		if (!activeForm) return { success: false, message: "Acción inválida" };
+		
+        // Ejecutamos la lógica específica de la acción seleccionada
+		const result = await ACTION_STRATEGIES[activeForm].execute(formData);
+		
+		if (result.success && promiseResolver.current) {
+			promiseResolver.current({ success: true, message: result.message });
+			promiseResolver.current = null;
+		}
+		return result;
+	};
+
+    // Construimos la configuración visual que el modal necesita ahora mismo
+	const currentModalConfig = activeForm ? ACTION_STRATEGIES[activeForm] : null;
+
+	return {
+		isModalOpen: activeForm !== null,
+		modalConfig: currentModalConfig,
+		triggerAction,
+		closeModal,
+		handleFormSubmit
+	};
+}
+
+// -----------------------------------------------------------------------------
+// 4. LA VISTA (El componente queda 100% enfocado en UI)
+// -----------------------------------------------------------------------------
+
+export default function PaymentsClient({ data }: PaymentsClientProps) {
+    // Toda la fontanería asíncrona se resume en esta línea
+	const { isModalOpen, modalConfig, triggerAction, closeModal, handleFormSubmit } = usePaymentActions();
+
 	const fields: FieldDef<PaymentRecord>[] = [
 		{
 			label: "Monto",
 			cell: (row) => <span className="text-emerald-700">${Number(row.amount).toFixed(2)}</span>,
-			isPrimary: true // El monto es el dato financiero central, lo destacamos como título
+			isPrimary: true
 		},
 		{
 			label: "ID Transacción",
-			// Usamos el atributo title para que al pasar el mouse se vea el UUID completo
 			cell: (row) => <span className="font-mono text-xs text-slate-500" title={row.transaction_id}>{row.transaction_id.split('-')[0]}...</span>
 		},
 		{
 			label: "Estado",
 			cell: (row) => {
-				// Diccionario de estilos dinámicos para mayor legibilidad visual
 				const statusStyles: Record<string, string> = {
 					'COMPLETED': 'bg-emerald-100 text-emerald-800 border-emerald-200',
 					'PENDING': 'bg-amber-100 text-amber-800 border-amber-200',
@@ -106,79 +148,48 @@ export default function PaymentsClient({ data }: PaymentsClientProps) {
 					'REFUNDED': 'bg-purple-100 text-purple-800 border-purple-200',
 				};
 				const style = statusStyles[row.status] || 'bg-slate-100 text-slate-800 border-slate-200';
-
-				return (
-					<span className={`px-2.5 py-1 text-xs font-bold rounded-md border ${style}`}>
-						{row.status}
-					</span>
-				);
+				return <span className={`px-2.5 py-1 text-xs font-bold rounded-md border ${style}`}>{row.status}</span>;
 			}
 		},
 		{
 			label: "Viaje (Trip ID)",
 			accessorKey: "trip_id",
-			fullWidth: true, // Obligamos a que ocupe todo el ancho para que no se corte visualmente
-			hrefTemplate: "/payment-system/payments?search={trip_id}" // Al hacer click, nos lleva a la página del viaje correspondiente
+			fullWidth: true,
+			hrefTemplate: "/payment-system/payments?search={trip_id}"
 		},
+		{ label: "Usuario ID", accessorKey: "id_user" },
 		{
-			label: "Usuario ID",
-			accessorKey: "id_user",
-		},
-		{
-			label: "ID Externo (MercadoPago)",
-			cell: (row) => (
-				<span className="font-mono text-xs text-slate-400">
-					{row.external_id ? row.external_id : 'N/A'}
-				</span>
-			),
-			fullWidth: true // Los IDs de MP suelen ser largos
+			label: "ID Externo (MP)",
+			cell: (row) => <span className="font-mono text-xs text-slate-400">{row.external_id || 'N/A'}</span>,
+			fullWidth: true
 		},
 		{
 			label: "Fecha",
 			cell: (row) => (
 				<time suppressHydrationWarning className="text-slate-600">
-					{new Date(row.created_at).toLocaleString('es-AR', {
-						day: '2-digit',
-						month: 'short',
-						hour: '2-digit',
-						minute: '2-digit'
-					})}
+					{new Date(row.created_at).toLocaleString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
 				</time>
 			)
 		},
 		{
 			label: "Borrado en",
 			cell: (row) => (
-				row.deleted_at ? (
-					<time suppressHydrationWarning className="text-rose-600 font-medium bg-rose-50 px-2 py-0.5 rounded-md">
-						{new Date(row.deleted_at).toLocaleString('es-AR', { day: '2-digit', month: 'short' })}
-					</time>
-				) : <span className="text-slate-300">-</span>
+				row.deleted_at 
+                    ? <time suppressHydrationWarning className="text-rose-600 font-medium bg-rose-50 px-2 py-0.5 rounded-md">{new Date(row.deleted_at).toLocaleString('es-AR', { day: '2-digit', month: 'short' })}</time> 
+                    : <span className="text-slate-300">-</span>
 			),
 		},
 	];
 
-
-
-	// 2. Definimos las acciones disponibles en la Toolbar
 	const actions: ActionDef[] = [
 		{
 			label: "Generar nuevo pago",
 			variant: "primary",
 			requireSelection: false,
-			onAction: () => {
-				setIsFormOpen(true);
-				
-                // Retornamos una promesa que queda "colgada" intencionalmente.
-                // Se resolverá cuando se llame a promiseResolver.current() desde el Formulario.
-				return new Promise((resolve) => {
-					promiseResolver.current = resolve;
-				});
-			}
+			onAction: () => triggerAction('CREATE_PAYMENT') 
 		}
 	];
 
-	// 3. Renderizamos pasando properties adaptadas a CardDataView
 	return (
 		<div>
 			<ResourceControlBar
@@ -186,8 +197,6 @@ export default function PaymentsClient({ data }: PaymentsClientProps) {
 				sortOptions={PAYMENT_SORT_OPTIONS}
 				filterOptions={PAYMENT_FILTER_OPTIONS}
 				filterPlaceholder="Filtrar por estado"
-			// Si tuvieras un backend que espera otro parámetro en la URL, se lo pasas así:
-			// filterParamKey="payment_status" 
 			/>
 
 			<CardDataView
@@ -198,15 +207,17 @@ export default function PaymentsClient({ data }: PaymentsClientProps) {
 				keyExtractor={(row) => row.transaction_id}
 			/>
 
-			<FormModal
-				isOpen={isFormOpen}
-				title="Generar Nuevo Pago"
-				description="Ingresa los datos para forzar la creación de un registro de pago."
-				fields={paymentFormFields}
-				submitText="Crear Pago"
-				onSubmit={handleCreatePayment}
-				onClose={handleCloseModal}
-			/>
+			{modalConfig && (
+				<FormModal
+					isOpen={isModalOpen}
+					title={modalConfig.title}
+					description={modalConfig.description}
+					fields={modalConfig.fields}
+					submitText={modalConfig.submitText}
+					onSubmit={handleFormSubmit}
+					onClose={closeModal}
+				/>
+			)}
 		</div>
 	);
 }

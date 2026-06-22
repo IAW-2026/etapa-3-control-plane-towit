@@ -1,19 +1,20 @@
-import PaymentsClient from "./DisbursementsClient"; // Importamos el Client Wrapper
+import DisbursementsClient from "./DisbursementsClient"; 
 import PaginationControls from "@/component/PaginationControls";
 
 export const dynamic = 'force-dynamic';
 
 interface PageProps {
- 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-async function fetchPaymentsData(params: { page: number; limit: number; search?: string; status?: string; sort?: string }) {
-    const baseUrl = process.env.PAYMENTS_SYSTEM_URL;     
+// 1. Extraemos la lógica de fetch a una función limpia para mantener el componente ordenado
+async function fetchDisbursementsData(params: { page: number; limit: number; search?: string; status?: string; sort?: string }) {
+    const baseUrl = process.env.PAYMENTS_SYSTEM_URL; 
+    
     if (!baseUrl) {
         throw new Error("CRITICAL: PAYMENTS_SYSTEM_URL no está definida.");
     }
 
-    // 2. Construcción segura de la URL y los Query Params para aplicar los filtros
     const url = new URL(`${baseUrl}/api/disbursements`);
     url.searchParams.append("page", params.page.toString());
     url.searchParams.append("limit", params.limit.toString());
@@ -27,7 +28,7 @@ async function fetchPaymentsData(params: { page: number; limit: number; search?:
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
-            'x-api-key': process.env.INTERNAL_API_SECRET || '' 
+            'x-api-key': process.env.INTERNAL_API_SECRET || '' // Nuestro pase de seguridad
         },
         // Al usar force-dynamic, Next.js por defecto no cacheará este fetch agresivamente,
         // pero podemos asegurarlo con 'no-store' si es información hiper-crítica.
@@ -36,8 +37,8 @@ async function fetchPaymentsData(params: { page: number; limit: number; search?:
 
     if (!response.ok) {
         const errorText = await response.text();
-        console.error("Fallo al obtener disbursements del sistema externo:", errorText);
-        throw new Error("No se pudieron cargar los disbursements.");
+        console.error("Fallo al obtener disposiciones del sistema externo:", errorText);
+        throw new Error("No se pudieron cargar las disposiciones.");
     }
 
     // 4. Retornamos la estructura unificada que definimos en el endpoint { data, meta }
@@ -45,43 +46,43 @@ async function fetchPaymentsData(params: { page: number; limit: number; search?:
 }
 
 export default async function DisbursementsPage(props: PageProps) {
-	const searchParams = await props.searchParams;
-	
-	const page = Number(searchParams.page) || 1;
-	const limit = Number(searchParams.limit) || 25; 
-	const offset = (page - 1) * limit;	
-    const searchQuery = (searchParams.search as string) || undefined;
-    const statusFilter = (searchParams.status as string) || undefined;
-    const sortOption = (searchParams.sort as string) || undefined;
+    const searchParams = await props.searchParams;
+    
+    // Capturamos la intención del usuario desde la URL
+    const page = Number(searchParams.page) || 1;
+    const limit = Number(searchParams.limit) || 25; 
+    const search = (searchParams.search as string) || undefined;
+    const status = (searchParams.status as string) || undefined;
+    const sort = (searchParams.sort as string) || undefined;
 
-	let paginatedPayments = [];
+    let paginatedDisbursements = [];
     let totalPages = 0;
 
-	try {
+    try {
         // Ejecutamos el fetch pasando todos los parámetros capturados
-        const result = await fetchPaymentsData({ page, limit, search: searchQuery, status: statusFilter, sort: sortOption });
+        const result = await fetchDisbursementsData({ page, limit, search, status, sort });
         
-        paginatedPayments = result.data;
+        paginatedDisbursements = result.data;
         totalPages = result.meta.totalPages;
         
     } catch (error) {
-        // Manejo de errores amigable en el servidor
+        // Manejo de errores a  migable en el servidor
         console.error("[DisbursementsPage] Error:", error);
         // Podrías renderizar un componente de ErrorState aquí en un caso real
     }
 
-	return (
-		<div className="max-w-7xl mx-auto p-8">
-			<div className="mb-6">
-				<h1 className="text-2xl font-bold text-gray-900">Gestión de liquidaciones</h1>
-				<p className="text-gray-500 text-sm mt-1">Selecciona una liquidación para aplicar operaciones.</p>
-			</div>
+    return (
+        <div className="max-w-7xl mx-auto p-8">
+            <div className="mb-6">
+                <h1 className="text-2xl font-bold text-gray-900">Gestión de Disposiciones</h1>
+                <p className="text-gray-500 text-sm mt-1">Selecciona una disposición para aplicar operaciones.</p>
+            </div>
 
-			<PaymentsClient data={paginatedPayments} />
+            <DisbursementsClient data={paginatedDisbursements} />
 
-			{totalPages > 0 && (
-        		<PaginationControls totalPages={totalPages} currentPage={page} />
-     		)}
-		</div>
-	);
+            {totalPages > 0 && (
+                <PaginationControls totalPages={totalPages} currentPage={page} />
+            )}
+        </div>
+    );
 }
