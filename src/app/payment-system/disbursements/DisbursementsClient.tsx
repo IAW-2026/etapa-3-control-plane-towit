@@ -1,11 +1,9 @@
 'use client'
 
-import React, { useRef, useState } from "react";
+import React from "react";
 // Importamos el nuevo componente de tarjetas y sus tipos
 import CardDataView, { FieldDef, ActionDef } from "@/component/CardDataView";
 import ResourceControlBar, { ControlOption } from "@/component/ResourceControlBar";
-import FormModal, { FormFieldDef } from "@/component/FormModal";
-import { createPaymentAction } from "@/actions/payment-system/payment.actions";
 
 
 // Definimos nuestras "tuplas" de opciones en el componente padre
@@ -42,47 +40,6 @@ interface PaymentsClientProps {
 
 export default function PaymentsClient({ data }: PaymentsClientProps) {
 
-	const [isFormOpen, setIsFormOpen] = useState(false);
-    
-	// MAGIA REACT: Guardamos el "control remoto" de la promesa del CardDataView
-	const promiseResolver = useRef<((value: { success: boolean; message: string } | null) => void) | null>(null);
-
-	const paymentFormFields: FormFieldDef[] = [
-		{ name: "trip_id", label: "ID del Viaje", type: "text", required: true, placeholder: "TRIP-12345" },
-		{ name: "id_user", label: "ID de clerk del Usuario", type: "text", required: true, placeholder: "Ej: 42" },
-		{ name: "amount", label: "Monto", type: "number", required: true, placeholder: "0.00" },
-	];
-
-	// 1. Manejador del envío del Modal
-	const handleCreatePayment = async (formData: Record<string, any>) => {
-		const result = await createPaymentAction(formData);
-		
-		if (result.success) {
-			// Si el backend lo creó con éxito, ejecutamos el resolver para destrabar 
-            // el botón de CardDataView y que muestre el modal global de éxito.
-			if (promiseResolver.current) {
-				promiseResolver.current({ success: true, message: result.message });
-				promiseResolver.current = null;
-			}
-		}
-		
-        // Siempre retornamos el result a DynamicFormModal.
-        // Si falló (success: false), el DynamicFormModal no se cerrará y mostrará el error en rojo.
-		return result; 
-	};
-
-    // 2. Manejador de cancelación del Modal
-	const handleCloseModal = () => {
-		setIsFormOpen(false);
-		
-        // Si cerramos el modal y la promesa seguía pendiente, la resolvemos con null.
-        // Esto le avisa al CardDataView que apague su estado de "Procesando..." silenciosamente.
-		if (promiseResolver.current) {
-			promiseResolver.current(null);
-			promiseResolver.current = null;
-		}
-	};
-
 	// 1. Definimos los Campos (Fields) utilizando el nuevo formato de tarjetas
 	const fields: FieldDef<PaymentRecord>[] = [
 		{
@@ -117,8 +74,7 @@ export default function PaymentsClient({ data }: PaymentsClientProps) {
 		{
 			label: "Viaje (Trip ID)",
 			accessorKey: "trip_id",
-			fullWidth: true, // Obligamos a que ocupe todo el ancho para que no se corte visualmente
-			hrefTemplate: "/payment-system/payments?search={trip_id}" // Al hacer click, nos lleva a la página del viaje correspondiente
+			fullWidth: true // Obligamos a que ocupe todo el ancho para que no se corte visualmente
 		},
 		{
 			label: "Usuario ID",
@@ -158,22 +114,14 @@ export default function PaymentsClient({ data }: PaymentsClientProps) {
 		},
 	];
 
-
-
 	// 2. Definimos las acciones disponibles en la Toolbar
 	const actions: ActionDef[] = [
 		{
 			label: "Generar nuevo pago",
 			variant: "primary",
-			requireSelection: false,
-			onAction: () => {
-				setIsFormOpen(true);
-				
-                // Retornamos una promesa que queda "colgada" intencionalmente.
-                // Se resolverá cuando se llame a promiseResolver.current() desde el Formulario.
-				return new Promise((resolve) => {
-					promiseResolver.current = resolve;
-				});
+			requireSelection: false, // No requiere selección previa para generar un nuevo pago
+			onAction: async () => {
+				return { success: true, message: "Pago generado exitosamente (simulado)." };
 			}
 		}
 	];
@@ -196,16 +144,6 @@ export default function PaymentsClient({ data }: PaymentsClientProps) {
 				fields={fields}
 				actions={actions}
 				keyExtractor={(row) => row.transaction_id}
-			/>
-
-			<FormModal
-				isOpen={isFormOpen}
-				title="Generar Nuevo Pago"
-				description="Ingresa los datos para forzar la creación de un registro de pago."
-				fields={paymentFormFields}
-				submitText="Crear Pago"
-				onSubmit={handleCreatePayment}
-				onClose={handleCloseModal}
 			/>
 		</div>
 	);
