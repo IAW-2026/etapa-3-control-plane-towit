@@ -8,9 +8,7 @@ import { createPaymentAction, deletePaymentAction } from "@/actions/payment-syst
 import { useRouter } from "next/navigation";
 import MessageModal from "@/component/MessageModal";
 
-// -----------------------------------------------------------------------------
-// 1. TIPOS Y CONSTANTES ESTÁTICAS (Fuera del componente para evitar re-creaciones)
-// -----------------------------------------------------------------------------
+// TIPOS Y CONSTANTES ESTÁTICAS 
 
 const PAYMENT_SORT_OPTIONS: ControlOption[] = [
 	{ label: "Más recientes primero", value: "created_desc" },
@@ -95,7 +93,7 @@ function usePaymentActions() {
     };
     const closeMessage = () => setMessageState(prev => ({ ...prev, isOpen: false }));
 
-	const triggerAction = (actionName: ActiveFormAction) => {
+	const openFormAction = (actionName: ActiveFormAction) => {
 		setActiveForm(actionName);
 		return new Promise<{ success: boolean; message: string } | null>((resolve) => { 
 			promiseResolver.current = resolve; 
@@ -135,7 +133,7 @@ function usePaymentActions() {
         showMessage,     // Exportamos el disparador
         closeMessage,    // Exportamos la función de cierre
         refresh: router.refresh, // Exportamos el refresh para actualizar la tabla
-		triggerAction,
+		openFormAction,
 		closeModal,
 		handleFormSubmit
 	};
@@ -150,7 +148,7 @@ export default function PaymentsClient({ data }: PaymentsClientProps) {
 	const { 
 		isModalOpen, 
 		modalConfig, 
-		triggerAction, 
+		openFormAction, 
 		closeModal, 
 		handleFormSubmit,
 		messageState,    
@@ -217,7 +215,7 @@ export default function PaymentsClient({ data }: PaymentsClientProps) {
 			label: "Generar nuevo pago",
 			variant: "primary",
 			requireSelection: false,
-			onAction: () => triggerAction('CREATE_PAYMENT') 
+			onAction: () => openFormAction('CREATE_PAYMENT') 
 		},
 		{
 			label: "Eliminar pago seleccionado",
