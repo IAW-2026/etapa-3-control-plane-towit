@@ -19,7 +19,8 @@ export type ActionDef = {
   label: string;
   variant?: "primary" | "danger" | "warning"; 
   requireSelection?: boolean;
-  onAction: (selectedId: string | null) => Promise<{ success: boolean; message?: string }>;
+  // Añadimos "| null" para soportar cancelaciones silenciosas
+  onAction: (selectedId: string | null) => Promise<{ success: boolean; message?: string } | null>;
 };
 
 interface CardDataViewProps<T> {
@@ -81,6 +82,9 @@ function DataToolbar({ selectedId, actions, title }: { selectedId: string | null
     const result = await action.onAction(selectedId);
     
     setIsProcessing(false);
+
+    // Si el resultado es null, el usuario canceló el modal. No hacemos nada más.
+    if (!result) return;
 
     // 3. Mapeamos automáticamente el booleano 'success' al tipo visual del Modal
     setModalState({

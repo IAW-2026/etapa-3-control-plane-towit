@@ -1,21 +1,21 @@
-import PaymentsClient from "./PaymentsClient"; 
+import DisbursementsClient from "./DisbursementsClient"; 
 import PaginationControls from "@/component/PaginationControls";
 
 export const dynamic = 'force-dynamic';
 
 interface PageProps {
- 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 // 1. Extraemos la lógica de fetch a una función limpia para mantener el componente ordenado
-async function fetchPaymentsData(params: { page: number; limit: number; search?: string; status?: string; sort?: string }) {
+async function fetchDisbursementsData(params: { page: number; limit: number; search?: string; status?: string; sort?: string }) {
     const baseUrl = process.env.PAYMENTS_SYSTEM_URL; 
     
     if (!baseUrl) {
         throw new Error("CRITICAL: PAYMENTS_SYSTEM_URL no está definida.");
     }
 
-    const url = new URL(`${baseUrl}/api/payments`);
+    const url = new URL(`${baseUrl}/api/disbursements`);
     url.searchParams.append("page", params.page.toString());
     url.searchParams.append("limit", params.limit.toString());
     
@@ -37,52 +37,52 @@ async function fetchPaymentsData(params: { page: number; limit: number; search?:
 
     if (!response.ok) {
         const errorText = await response.text();
-        console.error("Fallo al obtener pagos del sistema externo:", errorText);
-        throw new Error("No se pudieron cargar los pagos.");
+        console.error("Fallo al obtener disposiciones del sistema externo:", errorText);
+        throw new Error("No se pudieron cargar las disposiciones.");
     }
 
     // 4. Retornamos la estructura unificada que definimos en el endpoint { data, meta }
     return response.json(); 
 }
 
-export default async function PaymentsPage(props: PageProps) {
-	const searchParams = await props.searchParams;
-	
+export default async function DisbursementsPage(props: PageProps) {
+    const searchParams = await props.searchParams;
+    
     // Capturamos la intención del usuario desde la URL
-	const page = Number(searchParams.page) || 1;
-	const limit = Number(searchParams.limit) || 25; 
+    const page = Number(searchParams.page) || 1;
+    const limit = Number(searchParams.limit) || 25; 
     const search = (searchParams.search as string) || undefined;
     const status = (searchParams.status as string) || undefined;
     const sort = (searchParams.sort as string) || undefined;
 
-    let paginatedPayments = [];
+    let paginatedDisbursements = [];
     let totalPages = 0;
 
     try {
         // Ejecutamos el fetch pasando todos los parámetros capturados
-        const result = await fetchPaymentsData({ page, limit, search, status, sort });
+        const result = await fetchDisbursementsData({ page, limit, search, status, sort });
         
-        paginatedPayments = result.data;
+        paginatedDisbursements = result.data;
         totalPages = result.meta.totalPages;
         
     } catch (error) {
-        // Manejo de errores amigable en el servidor
-        console.error("[PaymentsPage] Error:", error);
+        // Manejo de errores a  migable en el servidor
+        console.error("[DisbursementsPage] Error:", error);
         // Podrías renderizar un componente de ErrorState aquí en un caso real
     }
 
-	return (
-		<div className="max-w-7xl mx-auto p-8">
-			<div className="mb-6">
-				<h1 className="text-2xl font-bold text-gray-900">Gestión de Pagos</h1>
-				<p className="text-gray-500 text-sm mt-1">Selecciona un pago para aplicar operaciones.</p>
-			</div>
+    return (
+        <div className="max-w-7xl mx-auto p-8">
+            <div className="mb-6">
+                <h1 className="text-2xl font-bold text-gray-900">Gestión de Disposiciones</h1>
+                <p className="text-gray-500 text-sm mt-1">Selecciona una disposición para aplicar operaciones.</p>
+            </div>
 
-			<PaymentsClient data={paginatedPayments} />
+            <DisbursementsClient data={paginatedDisbursements} />
 
-			{totalPages > 0 && (
-        		<PaginationControls totalPages={totalPages} currentPage={page} />
-     		)}
-		</div>
-	);
+            {totalPages > 0 && (
+                <PaginationControls totalPages={totalPages} currentPage={page} />
+            )}
+        </div>
+    );
 }
