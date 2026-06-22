@@ -4,7 +4,9 @@ import React, { useRef, useState } from "react";
 import CardDataView, { FieldDef, ActionDef } from "@/component/CardDataView";
 import ResourceControlBar, { ControlOption } from "@/component/ResourceControlBar";
 import FormModal, { FormFieldDef } from "@/component/FormModal";
-import { createPaymentAction } from "@/actions/payment-system/payment.actions";
+import { createPaymentAction, deletePaymentAction } from "@/actions/payment-system/payment.actions";
+import { useRouter } from "next/navigation";
+import MessageModal from "@/component/MessageModal";
 
 // -----------------------------------------------------------------------------
 // 1. TIPOS Y CONSTANTES ESTÁTICAS (Fuera del componente para evitar re-creaciones)
@@ -77,8 +79,21 @@ const ACTION_STRATEGIES: Record<Exclude<ActiveFormAction, null>, ActionStrategy>
 // -----------------------------------------------------------------------------
 
 function usePaymentActions() {
+	const router = useRouter();
 	const [activeForm, setActiveForm] = useState<ActiveFormAction>(null);
 	const promiseResolver = useRef<((value: { success: boolean; message: string } | null) => void) | null>(null);
+
+	const [messageState, setMessageState] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        type: 'success' | 'error';
+    }>({ isOpen: false, title: '', message: '', type: 'success' });
+
+    const showMessage = (title: string, message: string, type: 'success' | 'error') => {
+        setMessageState({ isOpen: true, title, message, type });
+    };
+    const closeMessage = () => setMessageState(prev => ({ ...prev, isOpen: false }));
 
 	const triggerAction = (actionName: ActiveFormAction) => {
 		setActiveForm(actionName);
@@ -108,12 +123,18 @@ function usePaymentActions() {
 		return result;
 	};
 
+	
+
     // Construimos la configuración visual que el modal necesita ahora mismo
 	const currentModalConfig = activeForm ? ACTION_STRATEGIES[activeForm] : null;
 
 	return {
 		isModalOpen: activeForm !== null,
 		modalConfig: currentModalConfig,
+        messageState,    // Exportamos el estado
+        showMessage,     // Exportamos el disparador
+        closeMessage,    // Exportamos la función de cierre
+        refresh: router.refresh, // Exportamos el refresh para actualizar la tabla
 		triggerAction,
 		closeModal,
 		handleFormSubmit
@@ -126,7 +147,17 @@ function usePaymentActions() {
 
 export default function PaymentsClient({ data }: PaymentsClientProps) {
     // Toda la fontanería asíncrona se resume en esta línea
-	const { isModalOpen, modalConfig, triggerAction, closeModal, handleFormSubmit } = usePaymentActions();
+	const { 
+		isModalOpen, 
+		modalConfig, 
+		triggerAction, 
+		closeModal, 
+		handleFormSubmit,
+		messageState,    
+		showMessage,     
+		closeMessage,    
+		refresh          
+	} = usePaymentActions();
 
 	const fields: FieldDef<PaymentRecord>[] = [
 		{
@@ -187,6 +218,27 @@ export default function PaymentsClient({ data }: PaymentsClientProps) {
 			variant: "primary",
 			requireSelection: false,
 			onAction: () => triggerAction('CREATE_PAYMENT') 
+		},
+		{
+			label: "Eliminar pago seleccionado",
+			variant: "danger",
+			requireSelection: true,
+			onAction: async (selectedId: string | null) => {
+				if (!selectedId) return null;
+				
+				// Llamada directa a la Server Action
+				const result = await deletePaymentAction(selectedId);
+				
+				if (result.ok) {
+					showMessage("Pago Eliminado", "El pago se canceló correctamente.", "success");
+					refresh(); // Refresca la tabla en background
+				} else {
+					const errorMsg = translateDeleteError(result.data?.code, result.data?.error);
+					showMessage("Error al eliminar", errorMsg, "error");
+				}
+				
+				return null; // Retornamos null para cumplir con la firma del tipo
+			}
 		}
 	];
 
@@ -218,6 +270,33 @@ export default function PaymentsClient({ data }: PaymentsClientProps) {
 					onClose={closeModal}
 				/>
 			)}
+
+			{messageState.isOpen && (
+                <MessageModal 
+                    isOpen={messageState.isOpen}
+                    title={messageState.title}
+                    message={messageState.message}
+                    type={messageState.type}
+                    onClose={closeMessage}
+                />
+            )}
 		</div>
 	);
+}
+
+function translateDeleteError(code?: string, fallbackMessage?: string): string {
+    switch (code) {
+        case "PAYMENT_NOT_FOUND":
+            return "El pago seleccionado no existe o ya ha sido cancelado previamente.";
+        case "ACTIVE_DISBURSEMENT_EXISTS":
+            return "Acción denegada: Existe un desembolso activo asociado. Debes revertir el desembolso primero.";
+        case "ACTIVE_REFUND_EXISTS":
+            return "Acción denegada: Ya existe un reembolso procesado para este viaje. Reviértelo primero.";
+        case "DATABASE_ERROR":
+            return "Ocurrió un error interno en la base de datos al intentar procesar la cancelación.";
+        case "SERVER_ACTION_ERROR":
+            return "El servidor no pudo completar la acción. Verifique su conexión.";
+        default:
+            return fallbackMessage || "Ocurrió un error desconocido al comunicarse con el servidor.";
+    }
 }
