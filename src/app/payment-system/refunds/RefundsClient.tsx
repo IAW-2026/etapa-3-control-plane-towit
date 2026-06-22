@@ -1,150 +1,219 @@
 'use client'
 
-import React from "react";
-// Importamos el nuevo componente de tarjetas y sus tipos
+import React, { useRef, useState } from "react";
 import CardDataView, { FieldDef, ActionDef } from "@/component/CardDataView";
 import ResourceControlBar, { ControlOption } from "@/component/ResourceControlBar";
+import FormModal, { FormFieldDef } from "@/component/FormModal";
+import { createRefundAction } from "@/actions/payment-system/refunds.actions";
 
+// -----------------------------------------------------------------------------
+// 1. TIPOS Y CONSTANTES ESTÁTICAS
+// -----------------------------------------------------------------------------
 
-// Definimos nuestras "tuplas" de opciones en el componente padre
-const PAYMENT_SORT_OPTIONS: ControlOption[] = [
+const REFUND_SORT_OPTIONS: ControlOption[] = [
 	{ label: "Más recientes primero", value: "created_desc" },
 	{ label: "Más antiguos primero", value: "created_asc" },
-	{ label: "Mayor precio", value: "amount_desc" },
-	{ label: "Menor precio", value: "amount_asc" },
+	{ label: "Mayor monto", value: "amount_desc" },
+	{ label: "Menor monto", value: "amount_asc" },
 ];
 
-const PAYMENT_FILTER_OPTIONS: ControlOption[] = [
+const REFUND_FILTER_OPTIONS: ControlOption[] = [
 	{ label: "Todos los estados", value: "ALL" },
 	{ label: "Pendiente", value: "PENDING" },
 	{ label: "Completado", value: "COMPLETED" },
-	{ label: "Reembolsado", value: "REFUNDED" },
+	{ label: "Cancelado", value: "CANCELLED" },
 ];
 
-// Tipamos estrictamente los datos según tu esquema de base de datos
-export interface PaymentRecord {
+export interface RefundRecord {
 	transaction_id: string;
 	trip_id: string;
 	id_user: number;
 	amount: string | number;
-	external_id: string | null;
-	status: 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'REFUNDED' | string;
+	refund_type: 'TOTAL' | 'PARTIAL'; // Exclusivo de Refunds
+	status: 'PENDING' | 'COMPLETED' | 'CANCELLED' | string;
 	created_at: string | Date;
-	updated_at: string | Date;
 	deleted_at: string | Date | null;
 }
 
-interface PaymentsClientProps {
-	data: PaymentRecord[];
+interface RefundsClientProps {
+	data: RefundRecord[];
 }
 
-export default function PaymentsClient({ data }: PaymentsClientProps) {
+type ActiveFormAction = 'CREATE_REFUND' | null;
 
-	// 1. Definimos los Campos (Fields) utilizando el nuevo formato de tarjetas
-	const fields: FieldDef<PaymentRecord>[] = [
+interface ActionStrategy {
+	title: string;
+	description: string;
+	submitText: string;
+	fields: FormFieldDef[];
+	execute: (formData: Record<string, any>) => Promise<{ success: boolean; message: string }>;
+}
+
+// -----------------------------------------------------------------------------
+// 2. EL DICCIONARIO DE ESTRATEGIAS
+// -----------------------------------------------------------------------------
+
+const ACTION_STRATEGIES: Record<Exclude<ActiveFormAction, null>, ActionStrategy> = {
+	CREATE_REFUND: {
+		title: "Procesar Nuevo Reembolso",
+		description: "Ingresa los datos para forzar la devolución de dinero de un viaje al pasajero.",
+		submitText: "Procesar Reembolso",
+		fields: [
+			{ name: "trip_id", label: "ID del Viaje", type: "text", required: true, placeholder: "TRIP-12345" },
+			{ name: "id_user", label: "ID de clerk del Pasajero", type: "text", required: true, placeholder: "Ej: user_2Q..." },
+			{ name: "refund_type", label: "Tipo de Reembolso", type: "text", required: true, placeholder: "TOTAL o PARTIAL" },
+		],
+		execute: async (formData) => {
+			return await createRefundAction(formData);
+		}
+	},
+};
+
+// -----------------------------------------------------------------------------
+// 3. EL CONTROLADOR LÓGICO (Custom Hook)
+// -----------------------------------------------------------------------------
+
+function useRefundActions() {
+	const [activeForm, setActiveForm] = useState<ActiveFormAction>(null);
+	const promiseResolver = useRef<((value: { success: boolean; message: string } | null) => void) | null>(null);
+
+	const triggerAction = (actionName: ActiveFormAction) => {
+		setActiveForm(actionName);
+		return new Promise<{ success: boolean; message: string } | null>((resolve) => { 
+			promiseResolver.current = resolve; 
+		});
+	};
+
+	const closeModal = () => {
+		setActiveForm(null);
+		if (promiseResolver.current) {
+			promiseResolver.current(null);
+			promiseResolver.current = null;
+		}
+	};
+
+	const handleFormSubmit = async (formData: Record<string, any>) => {
+		if (!activeForm) return { success: false, message: "Acción inválida" };
+		
+		const result = await ACTION_STRATEGIES[activeForm].execute(formData);
+		
+		if (result.success && promiseResolver.current) {
+			promiseResolver.current({ success: true, message: result.message });
+			promiseResolver.current = null;
+		}
+		return result;
+	};
+
+	const currentModalConfig = activeForm ? ACTION_STRATEGIES[activeForm] : null;
+
+	return {
+		isModalOpen: activeForm !== null,
+		modalConfig: currentModalConfig,
+		triggerAction,
+		closeModal,
+		handleFormSubmit
+	};
+}
+
+// -----------------------------------------------------------------------------
+// 4. LA VISTA
+// -----------------------------------------------------------------------------
+
+export default function RefundsClient({ data }: RefundsClientProps) {
+	const { isModalOpen, modalConfig, triggerAction, closeModal, handleFormSubmit } = useRefundActions();
+
+	const fields: FieldDef<RefundRecord>[] = [
 		{
 			label: "Monto",
-			cell: (row) => <span className="text-emerald-700">${Number(row.amount).toFixed(2)}</span>,
-			isPrimary: true // El monto es el dato financiero central, lo destacamos como título
+			cell: (row) => <span className="text-emerald-700 font-semibold">${Number(row.amount).toFixed(2)}</span>,
+			isPrimary: true
+		},
+		{
+			label: "Tipo",
+			cell: (row) => (
+				<span className={`text-xs font-bold ${row.refund_type === 'TOTAL' ? 'text-indigo-600' : 'text-amber-600'}`}>
+					{row.refund_type}
+				</span>
+			),
 		},
 		{
 			label: "ID Transacción",
-			// Usamos el atributo title para que al pasar el mouse se vea el UUID completo
 			cell: (row) => <span className="font-mono text-xs text-slate-500" title={row.transaction_id}>{row.transaction_id.split('-')[0]}...</span>
 		},
 		{
 			label: "Estado",
 			cell: (row) => {
-				// Diccionario de estilos dinámicos para mayor legibilidad visual
 				const statusStyles: Record<string, string> = {
 					'COMPLETED': 'bg-emerald-100 text-emerald-800 border-emerald-200',
 					'PENDING': 'bg-amber-100 text-amber-800 border-amber-200',
 					'CANCELLED': 'bg-rose-100 text-rose-800 border-rose-200',
-					'REFUNDED': 'bg-purple-100 text-purple-800 border-purple-200',
 				};
 				const style = statusStyles[row.status] || 'bg-slate-100 text-slate-800 border-slate-200';
-
-				return (
-					<span className={`px-2.5 py-1 text-xs font-bold rounded-md border ${style}`}>
-						{row.status}
-					</span>
-				);
+				return <span className={`px-2.5 py-1 text-xs font-bold rounded-md border ${style}`}>{row.status}</span>;
 			}
 		},
 		{
 			label: "Viaje (Trip ID)",
 			accessorKey: "trip_id",
-			fullWidth: true // Obligamos a que ocupe todo el ancho para que no se corte visualmente
+			fullWidth: true,
+			hrefTemplate: "/payment-system/refunds?search={trip_id}"
 		},
-		{
-			label: "Usuario ID",
-			accessorKey: "id_user",
-		},
-		{
-			label: "ID Externo (MercadoPago)",
-			cell: (row) => (
-				<span className="font-mono text-xs text-slate-400">
-					{row.external_id ? row.external_id : 'N/A'}
-				</span>
-			),
-			fullWidth: true // Los IDs de MP suelen ser largos
-		},
+		{ label: "Pasajero ID", accessorKey: "id_user" },
 		{
 			label: "Fecha",
 			cell: (row) => (
 				<time suppressHydrationWarning className="text-slate-600">
-					{new Date(row.created_at).toLocaleString('es-AR', {
-						day: '2-digit',
-						month: 'short',
-						hour: '2-digit',
-						minute: '2-digit'
-					})}
+					{new Date(row.created_at).toLocaleString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
 				</time>
 			)
 		},
 		{
 			label: "Borrado en",
 			cell: (row) => (
-				row.deleted_at ? (
-					<time suppressHydrationWarning className="text-rose-600 font-medium bg-rose-50 px-2 py-0.5 rounded-md">
-						{new Date(row.deleted_at).toLocaleString('es-AR', { day: '2-digit', month: 'short' })}
-					</time>
-				) : <span className="text-slate-300">-</span>
+				row.deleted_at 
+					? <time suppressHydrationWarning className="text-rose-600 font-medium bg-rose-50 px-2 py-0.5 rounded-md">{new Date(row.deleted_at).toLocaleString('es-AR', { day: '2-digit', month: 'short' })}</time> 
+					: <span className="text-slate-300">-</span>
 			),
 		},
 	];
 
-	// 2. Definimos las acciones disponibles en la Toolbar
 	const actions: ActionDef[] = [
 		{
-			label: "Generar nuevo pago",
+			label: "Procesar Reembolso",
 			variant: "primary",
-			requireSelection: false, // No requiere selección previa para generar un nuevo pago
-			onAction: async () => {
-				return { success: true, message: "Pago generado exitosamente (simulado)." };
-			}
+			requireSelection: false,
+			onAction: () => triggerAction('CREATE_REFUND') 
 		}
 	];
 
-	// 3. Renderizamos pasando properties adaptadas a CardDataView
 	return (
 		<div>
 			<ResourceControlBar
 				searchPlaceholder="Buscar por ID de transacción o viaje..."
-				sortOptions={PAYMENT_SORT_OPTIONS}
-				filterOptions={PAYMENT_FILTER_OPTIONS}
+				sortOptions={REFUND_SORT_OPTIONS}
+				filterOptions={REFUND_FILTER_OPTIONS}
 				filterPlaceholder="Filtrar por estado"
-			// Si tuvieras un backend que espera otro parámetro en la URL, se lo pasas así:
-			// filterParamKey="payment_status" 
 			/>
 
 			<CardDataView
-				title="Historial de Pagos Activos"
+				title="Historial de Reembolsos"
 				data={data}
 				fields={fields}
 				actions={actions}
 				keyExtractor={(row) => row.transaction_id}
 			/>
+
+			{modalConfig && (
+				<FormModal
+					isOpen={isModalOpen}
+					title={modalConfig.title}
+					description={modalConfig.description}
+					fields={modalConfig.fields}
+					submitText={modalConfig.submitText}
+					onSubmit={handleFormSubmit}
+					onClose={closeModal}
+				/>
+			)}
 		</div>
 	);
 }
