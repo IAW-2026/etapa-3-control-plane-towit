@@ -24,9 +24,9 @@ export async function createPaymentAction(formData: Record<string, any>) {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => null);
-            return { 
-                success: false, 
-                message: errorData?.error || "The payment system rejected the request." 
+            return {
+                success: false,
+                message: errorData?.error || "The payment system rejected the request."
             };
         }
 
@@ -41,7 +41,6 @@ export async function createPaymentAction(formData: Record<string, any>) {
 export async function deletePaymentAction(transactionId: string) {
     try {
         const secret = process.env.INTERNAL_API_SECRET;
-        // Las Server Actions requieren URLs absolutas para hacer fetch a tus propias APIs
         const baseUrl = process.env.PAYMENTS_SYSTEM_URL || '';
 
         const res = await fetch(`${baseUrl}/api/payments/${transactionId}`, {
@@ -52,16 +51,16 @@ export async function deletePaymentAction(transactionId: string) {
         });
 
         const data = await res.json();
-        
+
         // Devolvemos un objeto plano serializable para el Client Component
-        return { 
-            ok: res.ok, 
-            data 
+        return {
+            ok: res.ok,
+            data
         };
     } catch (error) {
-        return { 
-            ok: false, 
-            data: { code: "SERVER_ACTION_ERROR", error: "Fallo en la ejecución del servidor." } 
+        return {
+            ok: false,
+            data: { code: "SERVER_ACTION_ERROR", error: "Fallo en la ejecución del servidor." }
         };
     }
 }
