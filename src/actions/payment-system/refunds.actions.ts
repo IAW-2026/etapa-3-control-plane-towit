@@ -1,17 +1,17 @@
 "use server"
 
 import { revalidatePath } from "next/cache";
+import { ActionResponse, ActionErrorCode } from "./types";
 
-export async function createRefundAction(formData: Record<string, any>) {
+export async function createRefundAction(formData: Record<string, any>): Promise<ActionResponse> {
     try {
         const baseUrl = process.env.PAYMENTS_SYSTEM_URL;
-        if (!baseUrl) throw new Error("Incomplete server configuration.");
+        if (!baseUrl) return { success: false, code: 'SERVER_ERROR' };
 
-        // Adaptamos el payload al contrato estricto de tu API de Reembolsos
         const payload = {
             tripId: formData.trip_id,
             clerkId: formData.clerk_id,
-            refundType: formData.refund_type, 
+            refundType: formData.refund_type,
         };
 
         const response = await fetch(`${baseUrl}/api/refunds/`, {
@@ -23,26 +23,26 @@ export async function createRefundAction(formData: Record<string, any>) {
             body: JSON.stringify(payload)
         });
 
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => null);
-            return { 
-                success: false, 
-                message: errorData?.error || "The payment system rejected the request." 
-            };
+            const code: ActionErrorCode = errorData?.code || 'UNKNOWN_ERROR';
+
+            console.log("status:", response.status, " errorData:", errorData)
+
+            return { success: false, code };
         }
 
-        // Refrescamos la tabla para mostrar el nuevo reembolso de inmediato
         revalidatePath('/payment-system/refunds');
-
-        return { success: true, message: "Refund created successfully." };
+        return { success: true };
 
     } catch (error) {
         console.error("[Action Error]:", error);
-        return { success: false, message: "Failed to communicate with the server." };
+        return { success: false, code: 'SERVER_ACTION_ERROR' };
     }
 }
 
-export async function deleteRefundAction(transactionId: string) {
+export async function deleteRefundAction(transactionId: string): Promise<ActionResponse> {
     try {
         const secret = process.env.INTERNAL_API_SECRET;
         const baseUrl = process.env.PAYMENTS_SYSTEM_URL || '';
@@ -54,16 +54,15 @@ export async function deleteRefundAction(transactionId: string) {
             }
         });
 
-        const data = await res.json();
 
-        return {
-            ok: res.ok,
-            data
-        };
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            console.log("status:", res.status, " errorData:", errorData)
+            return { success: false, code: errorData?.code || 'UNKNOWN_ERROR' };
+        }
+
+        return { success: true };
     } catch (error) {
-        return {
-            ok: false,
-            data: { code: "SERVER_ACTION_ERROR", error: "Fallo en la ejecución del servidor." }
-        };
+        return { success: false, code: 'SERVER_ACTION_ERROR' };
     }
 }
