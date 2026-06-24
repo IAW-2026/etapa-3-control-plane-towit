@@ -24,7 +24,7 @@ export const DISBURSEMENT_FORM_CONFIGS = {
 		// Definición declarativa de los campos que el formulario dinámico renderizará.
 		fields: [
 			{ name: "trip_id", label: "ID del Viaje", type: "text", required: true, placeholder: "TRIP-12345" },
-			{ name: "id_user", label: "ID de clerk del Conductor", type: "text", required: true, placeholder: "Ej: user_2Q..." },
+			{ name: "clerk_id", label: "ID de clerk del Conductor", type: "text", required: true, placeholder: "Ej: user_2Q..." },
 			{ name: "platform_fee", label: "Comisión de Plataforma", type: "number", required: true, placeholder: "0.00" },
 		],
 		// Función adaptadora que se encarga de mandar los datos recopilados al backend/Server Action.

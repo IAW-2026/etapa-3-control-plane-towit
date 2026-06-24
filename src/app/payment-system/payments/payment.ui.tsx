@@ -46,7 +46,7 @@ export const getPaymentFields = (): FieldDef<PaymentRecord>[] => [
 		fullWidth: true,
 		hrefTemplate: "/payment-system/payments?search={trip_id}"
 	},
-	{ label: "Usuario ID", accessorKey: "id_user" },
+	{ label: "Clerk ID", accessorKey: "clerk_id" },
 	{
 		label: "ID Externo (MP)",
 		cell: (row) => <span className="font-mono text-xs text-slate-400">{row.external_id || 'N/A'}</span>,
@@ -63,8 +63,8 @@ export const getPaymentFields = (): FieldDef<PaymentRecord>[] => [
 	{
 		label: "Borrado en",
 		cell: (row) => (
-			row.deleted_at 
-				? <time suppressHydrationWarning className="text-rose-600 font-medium bg-rose-50 px-2 py-0.5 rounded-md">{new Date(row.deleted_at).toLocaleString('es-AR', { day: '2-digit', month: 'short' })}</time> 
+			row.deleted_at
+				? <time suppressHydrationWarning className="text-rose-600 font-medium bg-rose-50 px-2 py-0.5 rounded-md">{new Date(row.deleted_at).toLocaleString('es-AR', { day: '2-digit', month: 'short' })}</time>
 				: <span className="text-slate-300">-</span>
 		),
 	},

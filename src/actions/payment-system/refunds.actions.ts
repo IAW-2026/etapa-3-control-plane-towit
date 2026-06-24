@@ -10,7 +10,7 @@ export async function createRefundAction(formData: Record<string, any>) {
         // Adaptamos el payload al contrato estricto de tu API de Reembolsos
         const payload = {
             tripId: formData.trip_id,
-            clerkId: formData.id_user,
+            clerkId: formData.clerk_id,
             refundType: formData.refund_type, 
         };
 

@@ -1,7 +1,7 @@
 export interface PaymentRecord {
 	transaction_id: string;
 	trip_id: string;
-	id_user: number;
+	clerk_id: string;
 	amount: string | number;
 	external_id: string | null;
 	status: 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'REFUNDED' | string;

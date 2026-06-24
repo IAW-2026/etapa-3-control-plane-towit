@@ -9,7 +9,7 @@ export const REFUND_FORM_CONFIGS = {
 		submitText: "Procesar Reembolso",
 		fields: [
 			{ name: "trip_id", label: "ID del Viaje", type: "text", required: true, placeholder: "TRIP-12345" },
-			{ name: "id_user", label: "ID de clerk del Pasajero", type: "text", required: true, placeholder: "Ej: user_2Q..." },
+			{ name: "clerk_id", label: "ID de clerk del Pasajero", type: "text", required: true, placeholder: "Ej: user_2Q..." },
 			{ name: "refund_type", label: "Tipo de Reembolso", type: "text", required: true, placeholder: "TOTAL o PARTIAL" },
 		],
 		execute: async (formData) => {
