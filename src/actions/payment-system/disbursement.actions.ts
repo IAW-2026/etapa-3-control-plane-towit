@@ -11,7 +11,7 @@ export async function createDisbursementAction(formData: Record<string, any>): P
         const payload = {
             tripId: formData.trip_id,
             clerkId: formData.clerk_id,
-            feePercentage: Number(formData.platform_fee), 
+            feePercentage: Number(formData.platform_fee),
         };
 
         const response = await fetch(`${baseUrl}/api/disbursements/`, {
@@ -23,24 +23,13 @@ export async function createDisbursementAction(formData: Record<string, any>): P
             body: JSON.stringify(payload)
         });
 
+
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => null);
-            const rawMessage = errorData?.error || "";
-            let code: ActionErrorCode = 'UNKNOWN_ERROR';
-            
-            if (response.status === 400) {
-                code = 'VALIDATION_ERROR';
-            } else if (response.status === 401) {
-                code = 'NOT_AUTHORIZED';
-            } else if (response.status === 403) {
-                if (rawMessage.startsWith("User is banned")) code = 'USER_BANNED';
-                else code = 'NOT_AUTHORIZED';
-            } else if (response.status === 404) {
-                code = 'NOT_FOUND';
-            } else if (response.status >= 500) {
-                code = 'SERVER_ERROR';
-            }
-            
+            const code: ActionErrorCode = errorData?.code || 'UNKNOWN_ERROR';
+            console.log("status:", response.status, " errorData:", errorData)
+
             return { success: false, code };
         }
 
@@ -65,21 +54,13 @@ export async function deleteDisbursementAction(transactionId: string): Promise<A
             }
         });
 
-        if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            let code: ActionErrorCode = data.code;
-            
-            if (!code) {
-                if (res.status === 400) code = 'VALIDATION_ERROR';
-                else if (res.status === 401 || res.status === 403) code = 'NOT_AUTHORIZED';
-                else if (res.status === 404) code = 'DISBURSEMENT_NOT_FOUND';
-                else if (res.status >= 500) code = 'SERVER_ERROR';
-                else code = 'UNKNOWN_ERROR';
-            }
 
-            return { success: false, code };
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            console.log("status:", res.status, " errorData:", errorData)
+            return { success: false, code: errorData?.code || 'UNKNOWN_ERROR' };
         }
-        
+
         return { success: true };
     } catch (error) {
         return { success: false, code: 'SERVER_ACTION_ERROR' };

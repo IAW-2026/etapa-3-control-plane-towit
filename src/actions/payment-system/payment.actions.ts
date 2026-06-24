@@ -23,26 +23,15 @@ export async function createPaymentAction(formData: Record<string, any>): Promis
             body: JSON.stringify(payload)
         });
 
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => null);
-            const rawMessage = errorData?.error || "";
-            let code: ActionErrorCode = 'UNKNOWN_ERROR';
-            
-            if (response.status === 400) {
-                code = 'VALIDATION_ERROR';
-            } else if (response.status === 401) {
-                code = 'NOT_AUTHORIZED';
-            } else if (response.status === 403) {
-                if (rawMessage.startsWith("User is banned")) code = 'USER_BANNED';
-                else code = 'NOT_AUTHORIZED';
-            } else if (response.status === 404) {
-                code = 'NOT_FOUND';
-            } else if (response.status >= 500) {
-                code = 'SERVER_ERROR';
-            }
-            
+            const code: ActionErrorCode = errorData?.code || 'UNKNOWN_ERROR';
+            console.log("status:", response.status, " errorData:", errorData)
+
             return { success: false, code };
         }
+
 
         revalidatePath('/payment-system/payments');
         return { success: true };
@@ -65,21 +54,14 @@ export async function deletePaymentAction(transactionId: string): Promise<Action
             }
         });
 
+
+
         if (!res.ok) {
             const data = await res.json().catch(() => ({}));
-            let code: ActionErrorCode = data.code;
-            
-            if (!code) {
-                if (res.status === 400) code = 'VALIDATION_ERROR';
-                else if (res.status === 401 || res.status === 403) code = 'NOT_AUTHORIZED';
-                else if (res.status === 404) code = 'PAYMENT_NOT_FOUND';
-                else if (res.status >= 500) code = 'SERVER_ERROR';
-                else code = 'UNKNOWN_ERROR';
-            }
-            
-            return { success: false, code };
+            console.log("status:", res.status, " data:", data)
+            return { success: false, code: data?.code || 'UNKNOWN_ERROR' };
         }
-        
+
         return { success: true };
     } catch (error) {
         return { success: false, code: 'SERVER_ACTION_ERROR' };

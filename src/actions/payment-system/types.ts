@@ -1,4 +1,4 @@
-export type ActionErrorCode = 
+export type ActionErrorCode =
   | 'USER_BANNED'
   | 'NOT_AUTHORIZED'
   | 'SERVER_ERROR'
@@ -8,11 +8,13 @@ export type ActionErrorCode =
   | 'REFUND_NOT_FOUND'
   | 'DISBURSEMENT_NOT_FOUND'
   | 'ACTIVE_DISBURSEMENT_EXISTS'
+  | 'ACTIVE_PAYMENT_EXISTS'
   | 'ACTIVE_REFUND_EXISTS'
   | 'DATABASE_ERROR'
   | 'SERVER_ACTION_ERROR'
   | 'UNKNOWN_ERROR';
 
-export type ActionResponse = 
-    | { success: true }
-    | { success: false; code: ActionErrorCode };
+
+export type ActionResponse =
+  | { success: true }
+  | { success: false; code: ActionErrorCode };

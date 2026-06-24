@@ -2,6 +2,35 @@ import { ActionDef } from "@/component/CardDataView";
 import { createDisbursementAction, deleteDisbursementAction } from "@/actions/payment-system/disbursement.actions";
 import { ActionStrategy } from "@/hooks/useResourceActions";
 
+export function translateDisbursementError(code?: string, fallbackMessage?: string): string {
+	switch (code) {
+		case 'USER_BANNED':
+			return "Acción denegada: El conductor involucrado se encuentra baneado del sistema.";
+		case 'NOT_AUTHORIZED':
+			return "Error de autenticación interna con el sistema de pagos.";
+		case 'VALIDATION_ERROR':
+			return "Los datos de la liquidación proporcionados no son válidos.";
+		case 'NOT_FOUND':
+		case 'DISBURSEMENT_NOT_FOUND':
+			return "La liquidación especificada no existe o ya ha sido cancelada previamente.";
+		case 'ACTIVE_REFUND_EXISTS':
+			return "Acción denegada: Existe un reembolso activo para este viaje. No se puede generar liquidación.";
+		case 'ACTIVE_DISBURSEMENT_EXISTS':
+			return "Acción denegada: Ya existe una liquidación activa para este viaje. No se puede generar otra liquidación.";
+		case 'ACTIVE_PAYMENT_EXISTS':
+			return "Acción denegada: Existe un pago activo que entra en conflicto con esta liquidación.";
+		case 'DATABASE_ERROR':
+			return "Ocurrió un error interno en la base de datos de liquidaciones.";
+		case 'SERVER_ERROR':
+		case 'SERVER_ACTION_ERROR':
+			return "Error en el servidor al procesar la solicitud.";
+		case 'PAYMENT_NOT_FOUND':
+			return "Acción denegada: No se encontró un pago hecho asociado al viaje.";
+		default:
+			return fallbackMessage || "El sistema de pagos rechazó la solicitud debido a un error desconocido.";
+	}
+}
+
 /**
  * DISBURSEMENT_FORM_CONFIGS
  * -------------------------
@@ -31,10 +60,7 @@ export const DISBURSEMENT_FORM_CONFIGS = {
 		execute: async (formData) => {
 			const result = await createDisbursementAction(formData);
 			if (!result.success) {
-				let message = "El sistema de pagos rechazó la solicitud.";
-				if (result.code === 'USER_BANNED') message = "Acción denegada: El conductor involucrado se encuentra baneado del sistema.";
-				else if (result.code === 'NOT_AUTHORIZED') message = "Error de autenticación interna con el sistema de pagos.";
-				return { success: false, message };
+				return { success: false, message: translateDisbursementError(result.code, "No se pudo crear la liquidación.") };
 			}
 			return { success: true, message: "Liquidación generada exitosamente." };
 		}
@@ -42,19 +68,6 @@ export const DISBURSEMENT_FORM_CONFIGS = {
 } satisfies Record<string, ActionStrategy>;
 
 export type DisbursementFormAction = keyof typeof DISBURSEMENT_FORM_CONFIGS;
-
-export function translateDeleteError(code?: string, fallbackMessage?: string): string {
-	switch (code) {
-		case "DISBURSEMENT_NOT_FOUND":
-			return "La liquidación seleccionada no existe o ya ha sido cancelada previamente.";
-		case "DATABASE_ERROR":
-			return "Ocurrió un error interno en la base de datos al intentar procesar la cancelación.";
-		case "SERVER_ACTION_ERROR":
-			return "El servidor no pudo completar la acción. Verifique su conexión.";
-		default:
-			return fallbackMessage || "Ocurrió un error desconocido al comunicarse con el servidor.";
-	}
-}
 
 export interface DisbursementViewActionHandlers {
 	openFormAction: (actionName: DisbursementFormAction) => Promise<any>;
@@ -106,7 +119,7 @@ export const getDisbursementViewActions = (handlers: DisbursementViewActionHandl
 				handlers.showMessage("Liquidación Eliminada", "La liquidación se eliminó correctamente.", "success");
 				handlers.refresh(); // Refresca los datos en la tabla (invalida el query/estado local).
 			} else {
-				const errorMsg = translateDeleteError(result.code);
+				const errorMsg = translateDisbursementError(result.code, "No se pudo eliminar la liquidación.");
 				handlers.showMessage("Error al eliminar", errorMsg, "error");
 			}
 
