@@ -31,7 +31,7 @@ export async function createDisbursementAction(formData: Record<string, any>) {
             };
         }
 
-
+        revalidatePath('/payment-system/disbursements');
         return { success: true, message: "Disbursement created successfully." };
 
     } catch (error) {
