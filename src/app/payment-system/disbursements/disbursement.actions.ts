@@ -29,7 +29,14 @@ export const DISBURSEMENT_FORM_CONFIGS = {
 		],
 		// Función adaptadora que se encarga de mandar los datos recopilados al backend/Server Action.
 		execute: async (formData) => {
-			return await createDisbursementAction(formData);
+			const result = await createDisbursementAction(formData);
+			if (!result.success) {
+				let message = "El sistema de pagos rechazó la solicitud.";
+				if (result.code === 'USER_BANNED') message = "Acción denegada: El conductor involucrado se encuentra baneado del sistema.";
+				else if (result.code === 'NOT_AUTHORIZED') message = "Error de autenticación interna con el sistema de pagos.";
+				return { success: false, message };
+			}
+			return { success: true, message: "Liquidación generada exitosamente." };
 		}
 	},
 } satisfies Record<string, ActionStrategy>;
@@ -95,11 +102,11 @@ export const getDisbursementViewActions = (handlers: DisbursementViewActionHandl
 			const result = await deleteDisbursementAction(selectedId);
 
 			// Manejo de Side Effects local del cliente.
-			if (result.ok) {
+			if (result.success) {
 				handlers.showMessage("Liquidación Eliminada", "La liquidación se eliminó correctamente.", "success");
 				handlers.refresh(); // Refresca los datos en la tabla (invalida el query/estado local).
 			} else {
-				const errorMsg = translateDeleteError(result.data?.code, result.data?.error);
+				const errorMsg = translateDeleteError(result.code);
 				handlers.showMessage("Error al eliminar", errorMsg, "error");
 			}
 

@@ -13,7 +13,14 @@ export const REFUND_FORM_CONFIGS = {
 			{ name: "refund_type", label: "Tipo de Reembolso", type: "text", required: true, placeholder: "TOTAL o PARTIAL" },
 		],
 		execute: async (formData) => {
-			return await createRefundAction(formData);
+			const result = await createRefundAction(formData);
+			if (!result.success) {
+				let message = "El sistema de pagos rechazó la solicitud.";
+				if (result.code === 'USER_BANNED') message = "Acción denegada: El pasajero involucrado se encuentra baneado del sistema.";
+				else if (result.code === 'NOT_AUTHORIZED') message = "Error de autenticación interna con el sistema de pagos.";
+				return { success: false, message };
+			}
+			return { success: true, message: "Reembolso procesado exitosamente." };
 		}
 	},
 } satisfies Record<string, ActionStrategy>;
@@ -55,11 +62,11 @@ export const getRefundViewActions = (handlers: RefundViewActionHandlers): Action
 
 			const result = await deleteRefundAction(selectedId);
 
-			if (result.ok) {
+			if (result.success) {
 				handlers.showMessage("Reembolso Eliminado", "El reembolso se eliminó correctamente.", "success");
 				handlers.refresh();
 			} else {
-				const errorMsg = translateDeleteError(result.data?.code, result.data?.error);
+				const errorMsg = translateDeleteError(result.code);
 				handlers.showMessage("Error al eliminar", errorMsg, "error");
 			}
 

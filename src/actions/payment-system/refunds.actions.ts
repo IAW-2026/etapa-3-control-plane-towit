@@ -1,13 +1,13 @@
 "use server"
 
 import { revalidatePath } from "next/cache";
+import { ActionResponse, ActionErrorCode } from "./types";
 
-export async function createRefundAction(formData: Record<string, any>) {
+export async function createRefundAction(formData: Record<string, any>): Promise<ActionResponse> {
     try {
         const baseUrl = process.env.PAYMENTS_SYSTEM_URL;
-        if (!baseUrl) throw new Error("Incomplete server configuration.");
+        if (!baseUrl) return { success: false, code: 'SERVER_ERROR' };
 
-        // Adaptamos el payload al contrato estricto de tu API de Reembolsos
         const payload = {
             tripId: formData.trip_id,
             clerkId: formData.clerk_id,
@@ -25,24 +25,35 @@ export async function createRefundAction(formData: Record<string, any>) {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => null);
-            return {
-                success: false,
-                message: errorData?.error || "The payment system rejected the request."
-            };
+            const rawMessage = errorData?.error || "";
+            let code: ActionErrorCode = 'UNKNOWN_ERROR';
+            
+            if (response.status === 400) {
+                code = 'VALIDATION_ERROR';
+            } else if (response.status === 401) {
+                code = 'NOT_AUTHORIZED';
+            } else if (response.status === 403) {
+                if (rawMessage.startsWith("User is banned")) code = 'USER_BANNED';
+                else code = 'NOT_AUTHORIZED';
+            } else if (response.status === 404) {
+                code = 'NOT_FOUND';
+            } else if (response.status >= 500) {
+                code = 'SERVER_ERROR';
+            }
+            
+            return { success: false, code };
         }
 
-        // Refrescamos la tabla para mostrar el nuevo reembolso de inmediato
         revalidatePath('/payment-system/refunds');
-
-        return { success: true, message: "Refund created successfully." };
+        return { success: true };
 
     } catch (error) {
         console.error("[Action Error]:", error);
-        return { success: false, message: "Failed to communicate with the server." };
+        return { success: false, code: 'SERVER_ACTION_ERROR' };
     }
 }
 
-export async function deleteRefundAction(transactionId: string) {
+export async function deleteRefundAction(transactionId: string): Promise<ActionResponse> {
     try {
         const secret = process.env.INTERNAL_API_SECRET;
         const baseUrl = process.env.PAYMENTS_SYSTEM_URL || '';
@@ -54,16 +65,23 @@ export async function deleteRefundAction(transactionId: string) {
             }
         });
 
-        const data = await res.json();
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            let code: ActionErrorCode = data.code;
+            
+            if (!code) {
+                if (res.status === 400) code = 'VALIDATION_ERROR';
+                else if (res.status === 401 || res.status === 403) code = 'NOT_AUTHORIZED';
+                else if (res.status === 404) code = 'REFUND_NOT_FOUND';
+                else if (res.status >= 500) code = 'SERVER_ERROR';
+                else code = 'UNKNOWN_ERROR';
+            }
 
-        return {
-            ok: res.ok,
-            data
-        };
+            return { success: false, code };
+        }
+        
+        return { success: true };
     } catch (error) {
-        return {
-            ok: false,
-            data: { code: "SERVER_ACTION_ERROR", error: "Fallo en la ejecución del servidor." }
-        };
+        return { success: false, code: 'SERVER_ACTION_ERROR' };
     }
 }

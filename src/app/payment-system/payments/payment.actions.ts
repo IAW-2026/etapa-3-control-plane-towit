@@ -30,7 +30,14 @@ export const PAYMENT_FORM_CONFIGS = {
 		],
 		// Función adaptadora que se encarga de mandar los datos recopilados al backend/Server Action.
 		execute: async (formData) => {
-			return await createPaymentAction(formData);
+			const result = await createPaymentAction(formData);
+			if (!result.success) {
+				let message = "El sistema de pagos rechazó la solicitud.";
+				if (result.code === 'USER_BANNED') message = "Acción denegada: El usuario involucrado se encuentra baneado del sistema.";
+				else if (result.code === 'NOT_AUTHORIZED') message = "Error de autenticación interna con el sistema de pagos.";
+				return { success: false, message };
+			}
+			return { success: true, message: "Pago generado exitosamente." };
 		}
 	},
 } satisfies Record<string, ActionStrategy>;
@@ -101,11 +108,11 @@ export const getPaymentViewActions = (handlers: PaymentViewActionHandlers): Acti
 			const result = await deletePaymentAction(selectedId);
 
 			// Manejo de Side Effects local del cliente.
-			if (result.ok) {
+			if (result.success) {
 				handlers.showMessage("Pago Eliminado", "El pago se canceló correctamente.", "success");
 				handlers.refresh(); // Refresca los datos en la tabla (invalida el query/estado local).
 			} else {
-				const errorMsg = translateDeleteError(result.data?.code, result.data?.error);
+				const errorMsg = translateDeleteError(result.code);
 				handlers.showMessage("Error al eliminar", errorMsg, "error");
 			}
 
