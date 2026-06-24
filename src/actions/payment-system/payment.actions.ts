@@ -1,11 +1,12 @@
 "use server"
 
 import { revalidatePath } from "next/cache";
+import { ActionResponse, ActionErrorCode } from "./types";
 
-export async function createPaymentAction(formData: Record<string, any>) {
+export async function createPaymentAction(formData: Record<string, any>): Promise<ActionResponse> {
     try {
         const baseUrl = process.env.PAYMENTS_SYSTEM_URL;
-        if (!baseUrl) throw new Error("Incomplete server configuration.");
+        if (!baseUrl) return { success: false, code: 'SERVER_ERROR' };
 
         const payload = {
             tripId: formData.trip_id,
@@ -22,24 +23,26 @@ export async function createPaymentAction(formData: Record<string, any>) {
             body: JSON.stringify(payload)
         });
 
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => null);
-            return {
-                success: false,
-                message: errorData?.error || "The payment system rejected the request."
-            };
+            const code: ActionErrorCode = errorData?.code || 'UNKNOWN_ERROR';
+            console.log("status:", response.status, " errorData:", errorData)
+
+            return { success: false, code };
         }
 
+
         revalidatePath('/payment-system/payments');
-        return { success: true, message: "Payment created successfully." };
+        return { success: true };
 
     } catch (error) {
         console.error("[Action Error]:", error);
-        return { success: false, message: "Failed to communicate with the server." };
+        return { success: false, code: 'SERVER_ACTION_ERROR' };
     }
 }
 
-export async function deletePaymentAction(transactionId: string) {
+export async function deletePaymentAction(transactionId: string): Promise<ActionResponse> {
     try {
         const secret = process.env.INTERNAL_API_SECRET;
         const baseUrl = process.env.PAYMENTS_SYSTEM_URL || '';
@@ -51,17 +54,16 @@ export async function deletePaymentAction(transactionId: string) {
             }
         });
 
-        const data = await res.json();
 
-        // Devolvemos un objeto plano serializable para el Client Component
-        return {
-            ok: res.ok,
-            data
-        };
+
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            console.log("status:", res.status, " data:", data)
+            return { success: false, code: data?.code || 'UNKNOWN_ERROR' };
+        }
+
+        return { success: true };
     } catch (error) {
-        return {
-            ok: false,
-            data: { code: "SERVER_ACTION_ERROR", error: "Fallo en la ejecución del servidor." }
-        };
+        return { success: false, code: 'SERVER_ACTION_ERROR' };
     }
 }

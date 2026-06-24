@@ -2,6 +2,32 @@ import { ActionDef } from "@/component/CardDataView";
 import { createPaymentAction, deletePaymentAction } from "@/actions/payment-system/payment.actions";
 import { ActionStrategy } from "@/hooks/useResourceActions";
 
+export function translatePaymentError(code?: string, fallbackMessage?: string): string {
+	switch (code) {
+		case 'USER_BANNED':
+			return "Acción denegada: El usuario involucrado se encuentra baneado del sistema.";
+		case 'NOT_AUTHORIZED':
+			return "Error de autenticación interna con el sistema de pagos.";
+		case 'VALIDATION_ERROR':
+			return "Los datos de pago proporcionados no son válidos.";
+		case 'NOT_FOUND':
+		case 'PAYMENT_NOT_FOUND':
+			return "El pago especificado no existe o ya ha sido procesado/cancelado.";
+		case 'ACTIVE_DISBURSEMENT_EXISTS':
+			return "Acción denegada: Existe un desembolso activo asociado a este pago. Debes revertir el desembolso primero.";
+		case 'ACTIVE_REFUND_EXISTS':
+			return "Acción denegada: Ya existe un reembolso procesado para este pago. Reviértelo primero.";
+		case 'ACTIVE_PAYMENT_EXISTS':
+			return "Acción denegada: Ya existe un pago registrado para este viaje.";
+		case 'DATABASE_ERROR':
+			return "Ocurrió un error interno en la base de datos de pagos.";
+		case 'SERVER_ERROR':
+		case 'SERVER_ACTION_ERROR':
+			return "Error en el servidor al procesar la solicitud.";
+		default:
+			return fallbackMessage || "El sistema de pagos rechazó la solicitud debido a un error desconocido.";
+	}
+}
 
 /**
  * PAYMENT_FORM_CONFIGS
@@ -30,29 +56,16 @@ export const PAYMENT_FORM_CONFIGS = {
 		],
 		// Función adaptadora que se encarga de mandar los datos recopilados al backend/Server Action.
 		execute: async (formData) => {
-			return await createPaymentAction(formData);
+			const result = await createPaymentAction(formData);
+			if (!result.success) {
+				return { success: false, message: translatePaymentError(result.code, "No se pudo crear el pago.") };
+			}
+			return { success: true, message: "Pago generado exitosamente." };
 		}
 	},
 } satisfies Record<string, ActionStrategy>;
 
 export type PaymentFormAction = keyof typeof PAYMENT_FORM_CONFIGS;
-
-export function translateDeleteError(code?: string, fallbackMessage?: string): string {
-	switch (code) {
-		case "PAYMENT_NOT_FOUND":
-			return "El pago seleccionado no existe o ya ha sido cancelado previamente.";
-		case "ACTIVE_DISBURSEMENT_EXISTS":
-			return "Acción denegada: Existe un desembolso activo asociado. Debes revertir el desembolso primero.";
-		case "ACTIVE_REFUND_EXISTS":
-			return "Acción denegada: Ya existe un reembolso procesado para este viaje. Reviértelo primero.";
-		case "DATABASE_ERROR":
-			return "Ocurrió un error interno en la base de datos al intentar procesar la cancelación.";
-		case "SERVER_ACTION_ERROR":
-			return "El servidor no pudo completar la acción. Verifique su conexión.";
-		default:
-			return fallbackMessage || "Ocurrió un error desconocido al comunicarse con el servidor.";
-	}
-}
 
 export interface PaymentViewActionHandlers {
 	openFormAction: (actionName: PaymentFormAction) => Promise<any>;
@@ -101,11 +114,11 @@ export const getPaymentViewActions = (handlers: PaymentViewActionHandlers): Acti
 			const result = await deletePaymentAction(selectedId);
 
 			// Manejo de Side Effects local del cliente.
-			if (result.ok) {
+			if (result.success) {
 				handlers.showMessage("Pago Eliminado", "El pago se canceló correctamente.", "success");
 				handlers.refresh(); // Refresca los datos en la tabla (invalida el query/estado local).
 			} else {
-				const errorMsg = translateDeleteError(result.data?.code, result.data?.error);
+				const errorMsg = translatePaymentError(result.code, "No se pudo eliminar el pago.");
 				handlers.showMessage("Error al eliminar", errorMsg, "error");
 			}
 
