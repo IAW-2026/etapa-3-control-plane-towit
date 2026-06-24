@@ -30,6 +30,7 @@ export async function createPaymentAction(formData: Record<string, any>) {
             };
         }
 
+        revalidatePath('/payment-system/payments');
         return { success: true, message: "Payment created successfully." };
 
     } catch (error) {

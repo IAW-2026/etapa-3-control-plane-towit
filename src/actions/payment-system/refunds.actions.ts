@@ -11,7 +11,7 @@ export async function createRefundAction(formData: Record<string, any>) {
         const payload = {
             tripId: formData.trip_id,
             clerkId: formData.clerk_id,
-            refundType: formData.refund_type, 
+            refundType: formData.refund_type,
         };
 
         const response = await fetch(`${baseUrl}/api/refunds/`, {
@@ -25,9 +25,9 @@ export async function createRefundAction(formData: Record<string, any>) {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => null);
-            return { 
-                success: false, 
-                message: errorData?.error || "The payment system rejected the request." 
+            return {
+                success: false,
+                message: errorData?.error || "The payment system rejected the request."
             };
         }
 
