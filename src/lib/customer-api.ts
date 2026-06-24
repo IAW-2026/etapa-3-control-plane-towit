@@ -6,6 +6,7 @@ interface ApiOptions {
   limit?: number;
   search?: string;
   status?: string;
+  sort?: string;
 }
 
 async function fetchApi<T>(path: string, options?: ApiOptions): Promise<T> {
@@ -14,6 +15,7 @@ async function fetchApi<T>(path: string, options?: ApiOptions): Promise<T> {
   if (options?.limit) params.set("limit", String(options.limit));
   if (options?.search) params.set("search", options.search);
   if (options?.status) params.set("status", options.status);
+  if (options?.sort) params.set("sort", options.sort);
 
   const query = params.toString();
   const url = `${CUSTOMER_APP_URL}/api/admin${path}${query ? `?${query}` : ""}`;
@@ -63,6 +65,7 @@ export interface TripRecord {
   date: string;
   time: string;
   status: string;
+  isDeleted?: boolean;
 }
 
 export interface VehicleRecord {

@@ -1,6 +1,7 @@
 'use client'
 
-import React from "react";
+import React, { useMemo } from "react";
+import { useUser } from "@clerk/nextjs";
 import CardDataView from "@/component/CardDataView";
 import ResourceControlBar from "@/component/ResourceControlBar";
 import FormModal from "@/component/FormModal";
@@ -15,6 +16,9 @@ interface CustomersClientProps {
 }
 
 export default function CustomersClient({ data }: CustomersClientProps) {
+	const { user } = useUser();
+	const currentUserId = user?.id;
+
 	const {
 		isModalOpen,
 		modalConfig,
@@ -28,7 +32,16 @@ export default function CustomersClient({ data }: CustomersClientProps) {
 	} = useResourceActions(CUSTOMER_FORM_CONFIGS);
 
 	const fields = getCustomerFields();
-	const actions = getCustomerViewActions({ openFormAction, refresh, showMessage });
+
+	const recordMap = useMemo(() => {
+		const map = new Map<string, CustomerRecord>();
+		for (const record of data) {
+			map.set(String(record.customerId), record);
+		}
+		return map;
+	}, [data]);
+
+	const actions = getCustomerViewActions({ openFormAction, refresh, showMessage }, currentUserId, recordMap);
 
 	return (
 		<div>

@@ -25,9 +25,23 @@ export const getCustomerFields = (): FieldDef<CustomerRecord>[] => [
 	{
 		label: "ID Clerk",
 		cell: (row) => (
-			<span className="font-mono text-xs text-slate-500" title={row.clerkId}>
-				{row.clerkId.slice(0, 12)}...
+			<span className="font-mono text-xs text-slate-500 break-all" title={row.clerkId}>
+				{row.clerkId}
 			</span>
+		),
+		fullWidth: true,
+	},
+	
+	{
+		label: "Fecha registro",
+		cell: (row) => (
+			row.createdAt
+				? <time suppressHydrationWarning className="text-slate-600">
+						{new Date(row.createdAt).toLocaleDateString('es-AR', {
+							day: '2-digit', month: 'short', year: 'numeric'
+						})}
+					</time>
+				: <span className="text-slate-300">—</span>
 		),
 	},
 	{
@@ -40,18 +54,6 @@ export const getCustomerFields = (): FieldDef<CustomerRecord>[] => [
 			}`}>
 				{row.isActive ? 'Activo' : 'Inactivo'}
 			</span>
-		),
-	},
-	{
-		label: "Registrado",
-		cell: (row) => (
-			row.createdAt
-				? <time suppressHydrationWarning className="text-slate-600">
-						{new Date(row.createdAt).toLocaleDateString('es-AR', {
-							day: '2-digit', month: 'short', year: 'numeric'
-						})}
-					</time>
-				: <span className="text-slate-300">—</span>
 		),
 	},
 ];

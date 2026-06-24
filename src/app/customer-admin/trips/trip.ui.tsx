@@ -1,18 +1,44 @@
-import React from "react";
 import { FieldDef } from "@/component/CardDataView";
-import { ControlOption } from "@/component/ResourceControlBar";
 import { TripRecord } from "./trip.types";
 
-export const TRIP_SORT_OPTIONS: ControlOption[] = [
-	{ label: "Más recientes", value: "date_desc" },
-	{ label: "Más antiguos", value: "date_asc" },
+export interface SortOption {
+	value: string;
+	label: string;
+}
+
+export interface FilterOption {
+	value: string;
+	label: string;
+}
+
+export const STATUS_LABELS: Record<string, string> = {
+	'pendiente pago': 'Pendiente de pago',
+	'pago confirmado': 'Pago confirmado',
+	'en proceso': 'En curso',
+	finalizado: 'Finalizado',
+	cancelado: 'Cancelado',
+};
+
+export const STATUS_STYLES: Record<string, string> = {
+	'pendiente pago': 'bg-amber-50 text-amber-700 border-amber-200',
+	'pago confirmado': 'bg-blue-50 text-blue-700 border-blue-200',
+	'en proceso': 'bg-indigo-50 text-indigo-700 border-indigo-200',
+	finalizado: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+	cancelado: 'bg-rose-50 text-rose-700 border-rose-200',
+};
+
+export const TRIP_SORT_OPTIONS: SortOption[] = [
+	{ value: 'date-desc', label: 'Más recientes' },
+	{ value: 'date-asc', label: 'Más antiguos' },
 ];
 
-export const TRIP_FILTER_OPTIONS: ControlOption[] = [
-	{ label: "Todos los estados", value: "ALL" },
-	{ label: "Completado", value: "COMPLETED" },
-	{ label: "Pendiente", value: "PENDING" },
-	{ label: "Cancelado", value: "CANCELLED" },
+export const TRIP_FILTER_OPTIONS: FilterOption[] = [
+	{ value: 'all', label: 'Todos' },
+	{ value: 'pendiente pago', label: 'Pendiente de pago' },
+	{ value: 'pago confirmado', label: 'Pago confirmado' },
+	{ value: 'en proceso', label: 'En curso' },
+	{ value: 'finalizado', label: 'Finalizado' },
+	{ value: 'cancelado', label: 'Cancelado' },
 ];
 
 export const getTripFields = (): FieldDef<TripRecord>[] => [
@@ -46,22 +72,19 @@ export const getTripFields = (): FieldDef<TripRecord>[] => [
 	{
 		label: "Estado",
 		cell: (row) => {
-			const statusStyles: Record<string, string> = {
-				'COMPLETED': 'bg-emerald-100 text-emerald-800 border-emerald-200',
-				'PENDING': 'bg-amber-100 text-amber-800 border-amber-200',
-				'CANCELLED': 'bg-rose-100 text-rose-800 border-rose-200',
-			};
-			const style = statusStyles[row.status] || 'bg-slate-100 text-slate-800 border-slate-200';
+			const statusKey = row.status?.toLowerCase() || '';
+			const style = STATUS_STYLES[statusKey] || 'bg-slate-100 text-slate-800 border-slate-200';
+			const label = STATUS_LABELS[statusKey] || row.status;
 
 			return (
 				<span className={`px-2.5 py-1 text-xs font-bold rounded-md border ${style}`}>
-					{row.status}
+					{label}
 				</span>
 			);
 		},
 	},
 	{
-		label: "Fecha",
+		label: "Fecha y hora",
 		cell: (row) => {
 			const dateObj = new Date(`${row.date}T${row.time}`);
 			return (

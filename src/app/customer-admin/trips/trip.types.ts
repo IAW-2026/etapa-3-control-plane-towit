@@ -7,5 +7,6 @@ export interface TripRecord {
 	destinationChar: string;
 	date: string;
 	time: string;
-	status: 'COMPLETED' | 'PENDING' | 'CANCELLED' | string;
+	status: 'PENDING_PAYMENT' | 'PAYMENT_CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'DELETED' | string;
+	isDeleted?: boolean;
 }

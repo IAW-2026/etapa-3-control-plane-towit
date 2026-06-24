@@ -32,6 +32,7 @@ interface CardDataViewProps<T> {
 
 // COMPONENTE PRINCIPAL 
 export default function CardDataView<T>({ data, fields, actions = [], keyExtractor, title }: CardDataViewProps<T>) {
+  const hasActions = actions.length > 0;
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const toggleSelection = (id: string) => {
@@ -54,8 +55,8 @@ export default function CardDataView<T>({ data, fields, actions = [], keyExtract
         data={data} 
         fields={fields} 
         keyExtractor={keyExtractor} 
-        selectedIds={selectedIds}
-        onSelectRow={toggleSelection}
+        selectedIds={hasActions ? selectedIds : undefined}
+        onSelectRow={hasActions ? toggleSelection : undefined}
       />
     </div>
   );
@@ -145,7 +146,7 @@ function DataToolbar({ selectedIds, actions, title }: { selectedIds: Set<string>
 
 // --- SUB-COMPONENTE: GRID DE TARJETAS ---
 function DataGrid<T>({ data, fields, keyExtractor, selectedIds, onSelectRow }: 
-  { data: T[], fields: FieldDef<T>[], keyExtractor: (row: T) => string, selectedIds: Set<string>, onSelectRow: (id: string) => void }) {
+  { data: T[], fields: FieldDef<T>[], keyExtractor: (row: T) => string, selectedIds?: Set<string>, onSelectRow?: (id: string) => void }) {
   
   if (data.length === 0) {
     return (
@@ -165,8 +166,8 @@ function DataGrid<T>({ data, fields, keyExtractor, selectedIds, onSelectRow }:
             key={rowId}
             item={row}
             fields={fields}
-            isSelected={selectedIds.has(rowId)}
-            onToggle={() => onSelectRow(rowId)}
+            isSelected={selectedIds?.has(rowId)}
+            onToggle={onSelectRow ? () => onSelectRow(rowId) : undefined}
           />
         );
       })}
