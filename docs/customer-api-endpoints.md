@@ -383,12 +383,81 @@ export async function GET(request: NextRequest) {
 
 ---
 
+## 5. Alternar estado de cliente — `PATCH /api/admin/customers/[id]`
+
+Actualiza el estado `isActive` de un cliente.
+
+### Body
+
+```typescript
+{
+  isActive: boolean;
+}
+```
+
+### Response
+
+```typescript
+{
+  success: boolean;
+  customer: {
+    customerId: number;
+    isActive: boolean;
+  };
+}
+```
+
+### Código de ejemplo
+
+```typescript
+// app/api/admin/customers/[id]/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { validateApiKey } from "@/lib/api-auth";
+import { db } from "@/db";
+import { customer } from "@/db/schema";
+import { eq } from "drizzle-orm";
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  if (!validateApiKey(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const customerId = Number(params.id);
+  if (isNaN(customerId)) {
+    return NextResponse.json({ error: "Invalid customer ID" }, { status: 400 });
+  }
+
+  const body = await request.json();
+  if (typeof body.isActive !== "boolean") {
+    return NextResponse.json({ error: "isActive must be a boolean" }, { status: 400 });
+  }
+
+  const [updated] = await db
+    .update(customer)
+    .set({ is_active: body.isActive })
+    .where(eq(customer.customer_id, customerId))
+    .returning({ customerId: customer.customer_id, isActive: customer.is_active });
+
+  if (!updated) {
+    return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+  }
+
+  return NextResponse.json({ success: true, customer: updated });
+}
+```
+
+---
+
 ## Resumen de archivos a crear en `towit-customer`
 
 ```
 towit-customer/app/api/admin/
 ├── dashboard/route.ts
 ├── customers/route.ts
+├── customers/[id]/route.ts   ← PATCH para toggle estado
 ├── trips/route.ts
 └── vehicles/route.ts
 ```

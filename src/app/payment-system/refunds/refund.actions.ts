@@ -50,10 +50,10 @@ export const getRefundViewActions = (handlers: RefundViewActionHandlers): Action
 		label: "Eliminar reembolso seleccionado",
 		variant: "danger",
 		requireSelection: true,
-		onAction: async (selectedId: string | null) => {
-			if (!selectedId) return null;
+		onAction: async (selectedIds: string[]) => {
+			if (selectedIds.length === 0) return null;
 
-			const result = await deleteRefundAction(selectedId);
+			const result = await deleteRefundAction(selectedIds[0]);
 
 			if (result.ok) {
 				handlers.showMessage("Reembolso Eliminado", "El reembolso se eliminó correctamente.", "success");

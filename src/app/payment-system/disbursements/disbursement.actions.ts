@@ -89,10 +89,10 @@ export const getDisbursementViewActions = (handlers: DisbursementViewActionHandl
 		label: "Eliminar liquidación seleccionada",
 		variant: "danger",
 		requireSelection: true,
-		onAction: async (selectedId: string | null) => {
-			if (!selectedId) return null;
+		onAction: async (selectedIds: string[]) => {
+			if (selectedIds.length === 0) return null;
 
-			const result = await deleteDisbursementAction(selectedId);
+			const result = await deleteDisbursementAction(selectedIds[0]);
 
 			// Manejo de Side Effects local del cliente.
 			if (result.ok) {

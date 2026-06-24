@@ -95,10 +95,10 @@ export const getPaymentViewActions = (handlers: PaymentViewActionHandlers): Acti
 		// Habilita el botón *solo* cuando el usuario haya seleccionado una o más entidades de la vista de tabla.
 		requireSelection: true,
 		// Al hacer clic, ejecuta la eliminación de forma directa porque no necesitamos pedirle más datos al usuario.
-		onAction: async (selectedId: string | null) => {
-			if (!selectedId) return null;
+		onAction: async (selectedIds: string[]) => {
+			if (selectedIds.length === 0) return null;
 
-			const result = await deletePaymentAction(selectedId);
+			const result = await deletePaymentAction(selectedIds[0]);
 
 			// Manejo de Side Effects local del cliente.
 			if (result.ok) {

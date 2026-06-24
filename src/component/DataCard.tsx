@@ -1,5 +1,5 @@
 import React from 'react';
-import Link from 'next/link'; // Importante para Next.js
+import Link from 'next/link';
 import { FieldDef } from './CardDataView';
 
 interface DataCardProps<T> {
@@ -19,12 +19,16 @@ export default function DataCard<T>({ item, fields, isSelected, onToggle }: Data
           : 'bg-white border-slate-200 hover:border-indigo-300 hover:shadow-md'
       }`}
     >
-      {/* Indicador visual de selección en la esquina */}
+      {/* Indicador visual de selección - checkbox */}
       <div className="absolute top-5 right-5">
-        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${
+        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
           isSelected ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300'
         }`}>
-          {isSelected && <div className="w-2 h-2 rounded-full bg-white"></div>}
+          {isSelected && (
+            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          )}
         </div>
       </div>
 
@@ -34,12 +38,9 @@ export default function DataCard<T>({ item, fields, isSelected, onToggle }: Data
           const isPrimary = field.isPrimary;
           const isFullWidth = field.fullWidth || isPrimary;
           
-          // 1. Calculamos el contenido base (ya sea custom o el valor directo)
           let content = field.cell ? field.cell(item) : String(item[field.accessorKey as keyof T] ?? 'N/A');
 
-          // 2. Si el campo definió un template, resolvemos la URL y envolvemos el contenido
           if (field.hrefTemplate) {
-            // Busca cualquier texto entre llaves {key} y lo reemplaza por item[key]
             const resolvedHref = field.hrefTemplate.replace(/{(\w+)}/g, (_, key) => {
               return String(item[key as keyof T] ?? '');
             });
@@ -47,7 +48,6 @@ export default function DataCard<T>({ item, fields, isSelected, onToggle }: Data
             content = (
               <Link 
                 href={resolvedHref}
-                // Evita que al hacer click en el link, se seleccione la tarjeta
                 onClick={(e) => e.stopPropagation()} 
                 className="text-indigo-600 hover:text-indigo-800 hover:underline transition-colors inline-block w-fit"
               >

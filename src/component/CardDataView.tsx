@@ -19,8 +19,7 @@ export type ActionDef = {
   label: string;
   variant?: "primary" | "danger" | "warning"; 
   requireSelection?: boolean;
-  // Añadimos "| null" para soportar cancelaciones silenciosas
-  onAction: (selectedId: string | null) => Promise<{ success: boolean; message?: string } | null>;
+  onAction: (selectedIds: string[]) => Promise<{ success: boolean; message?: string } | null>;
 };
 
 interface CardDataViewProps<T> {
@@ -33,32 +32,39 @@ interface CardDataViewProps<T> {
 
 // COMPONENTE PRINCIPAL 
 export default function CardDataView<T>({ data, fields, actions = [], keyExtractor, title }: CardDataViewProps<T>) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const toggleSelection = (id: string) => {
-    setSelectedId((prev) => (prev === id ? null : id));
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   };
 
   return (
     <div className="space-y-6">
-      <DataToolbar selectedId={selectedId} actions={actions} title={title} />
+      <DataToolbar selectedIds={selectedIds} actions={actions} title={title} />
 
       <DataGrid 
         data={data} 
         fields={fields} 
         keyExtractor={keyExtractor} 
-        selectedId={selectedId}
+        selectedIds={selectedIds}
         onSelectRow={toggleSelection}
       />
     </div>
   );
 }
 
-// --- SUB-COMPONENTE: TOOLBAR (Misma lógica, reusabilidad pura) ---
-function DataToolbar({ selectedId, actions, title }: { selectedId: string | null, actions: ActionDef[], title?: string }) {
+// --- SUB-COMPONENTE: TOOLBAR ---
+function DataToolbar({ selectedIds, actions, title }: { selectedIds: Set<string>, actions: ActionDef[], title?: string }) {
   const [isProcessing, setIsProcessing] = useState(false);
   
-  // 1. Tipamos el estado usando exactamente los tipos de tu MessageModal
   const [modalState, setModalState] = useState<{ 
     isOpen: boolean; 
     type: MessageModalType; 
@@ -74,35 +80,41 @@ function DataToolbar({ selectedId, actions, title }: { selectedId: string | null
   const closeModal = () => setModalState(prev => ({ ...prev, isOpen: false }));
 
   const handleActionClick = async (action: ActionDef) => {
-    if (action.requireSelection && !selectedId) return;
+    if (action.requireSelection && selectedIds.size === 0) return;
     
     setIsProcessing(true);
     
-    // 2. Ejecutamos la acción, que nos devuelve { success, message }
-    const result = await action.onAction(selectedId);
+    const selectedArray = Array.from(selectedIds);
+    const result = await action.onAction(selectedArray);
     
     setIsProcessing(false);
 
-    // Si el resultado es null, el usuario canceló el modal. No hacemos nada más.
     if (!result) return;
 
-    // 3. Mapeamos automáticamente el booleano 'success' al tipo visual del Modal
     setModalState({
       isOpen: true,
       type: result.success ? 'success' : 'error',
       title: result.success ? 'Operación Exitosa' : 'Atención',
-      // Si el backend (o la acción) mandó un mensaje custom, lo usamos. Si no, usamos uno por defecto.
       message: result.message || (result.success ? 'La operación se procesó correctamente.' : 'No se pudo completar la operación.')
     });
   };
 
+  const hasSelection = selectedIds.size > 0;
+
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-4 sm:px-6 rounded-2xl border border-slate-200 shadow-sm gap-4">
-      <h2 className="text-xl font-bold text-slate-900 tracking-tight">{title || "Registros"}</h2>
+      <div className="flex items-center gap-3">
+        <h2 className="text-xl font-bold text-slate-900 tracking-tight">{title || "Registros"}</h2>
+        {hasSelection && (
+          <span className="text-xs font-semibold bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full">
+            {selectedIds.size} seleccionado{selectedIds.size !== 1 ? 's' : ''}
+          </span>
+        )}
+      </div>
       
       <div className="flex flex-wrap gap-3 w-full sm:w-auto">
         {actions.map((action, idx) => {
-          const isDisabled = (action.requireSelection && !selectedId) || isProcessing;
+          const isDisabled = (action.requireSelection && !hasSelection) || isProcessing;
           
           const baseStyles = "w-full sm:w-auto px-4 py-2 text-sm font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2";
           const colorStyles = action.variant === "danger" 
@@ -113,19 +125,18 @@ function DataToolbar({ selectedId, actions, title }: { selectedId: string | null
 
           return (
             <button key={idx} onClick={() => handleActionClick(action)} disabled={isDisabled} className={`${baseStyles} ${colorStyles}`}>
-              {isProcessing && selectedId ? "Procesando..." : action.label}
+              {isProcessing && hasSelection ? `Procesando (${selectedIds.size})...` : action.label}
             </button>
           );
         })}
       </div>
 
-      {/* 4. Renderizamos tu MessageModal usando la nueva prop showBlur */}
       <MessageModal
         isOpen={modalState.isOpen}
         type={modalState.type}
         title={modalState.title}
         message={modalState.message}
-        showBlur={true} // Agregado para aprovechar la nueva funcionalidad visual que hiciste
+        showBlur={true}
         onClose={closeModal}
       />
     </div>
@@ -133,8 +144,8 @@ function DataToolbar({ selectedId, actions, title }: { selectedId: string | null
 }
 
 // --- SUB-COMPONENTE: GRID DE TARJETAS ---
-function DataGrid<T>({ data, fields, keyExtractor, selectedId, onSelectRow }: 
-  { data: T[], fields: FieldDef<T>[], keyExtractor: (row: T) => string, selectedId: string | null, onSelectRow: (id: string) => void }) {
+function DataGrid<T>({ data, fields, keyExtractor, selectedIds, onSelectRow }: 
+  { data: T[], fields: FieldDef<T>[], keyExtractor: (row: T) => string, selectedIds: Set<string>, onSelectRow: (id: string) => void }) {
   
   if (data.length === 0) {
     return (
@@ -150,12 +161,11 @@ function DataGrid<T>({ data, fields, keyExtractor, selectedId, onSelectRow }:
         const rowId = keyExtractor(row);
         
         return (
-          // 👇 Aquí está la magia de la refactorización
           <DataCard 
             key={rowId}
             item={row}
             fields={fields}
-            isSelected={selectedId === rowId}
+            isSelected={selectedIds.has(rowId)}
             onToggle={() => onSelectRow(rowId)}
           />
         );
