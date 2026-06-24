@@ -1,11 +1,34 @@
 import VehiclesClient from "./VehiclesClient";
 import PaginationControls from "@/component/PaginationControls";
-import { getVehicles } from "@/lib/customer-api";
+import { getVehicles, VehicleRecord } from "@/lib/customer-api";
 
 export const dynamic = 'force-dynamic';
 
 interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+function sortData(data: VehicleRecord[], sort: string | undefined): VehicleRecord[] {
+  if (!sort) return data;
+
+  const sorted = [...data];
+
+  switch (sort) {
+    case "name-asc":
+      sorted.sort((a, b) => `${a.brand} ${a.model}`.localeCompare(`${b.brand} ${b.model}`));
+      break;
+    case "name-desc":
+      sorted.sort((a, b) => `${b.brand} ${b.model}`.localeCompare(`${a.brand} ${a.model}`));
+      break;
+    case "year-asc":
+      sorted.sort((a, b) => a.year - b.year);
+      break;
+    case "year-desc":
+      sorted.sort((a, b) => b.year - a.year);
+      break;
+  }
+
+  return sorted;
 }
 
 export default async function VehiclesPage(props: PageProps) {
@@ -14,6 +37,7 @@ export default async function VehiclesPage(props: PageProps) {
   const page = Number(searchParams.page) || 1;
   const limit = Number(searchParams.limit) || 25;
   const searchQuery = (searchParams.search as string) || undefined;
+  const sort = (searchParams.sort as string) || undefined;
 
   const { data: paginated, total: totalCount } = await getVehicles({ page, limit, search: searchQuery });
 
@@ -26,7 +50,7 @@ export default async function VehiclesPage(props: PageProps) {
         <p className="text-gray-500 text-sm mt-1">Administra los vehículos registrados por los clientes.</p>
       </div>
 
-      <VehiclesClient data={paginated} />
+      <VehiclesClient data={sortData(paginated, sort)} />
 
       {totalPages > 0 && (
         <PaginationControls totalPages={totalPages} currentPage={page} />

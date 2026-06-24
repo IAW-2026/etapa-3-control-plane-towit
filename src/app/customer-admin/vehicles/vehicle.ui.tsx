@@ -1,13 +1,12 @@
-import React from "react";
 import { FieldDef } from "@/component/CardDataView";
 import { ControlOption } from "@/component/ResourceControlBar";
 import { VehicleRecord } from "./vehicle.types";
 
 export const VEHICLE_SORT_OPTIONS: ControlOption[] = [
-	{ label: "Marca A-Z", value: "brand_asc" },
-	{ label: "Marca Z-A", value: "brand_desc" },
-	{ label: "Año descendente", value: "year_desc" },
-	{ label: "Año ascendente", value: "year_asc" },
+	{ label: "Vehículo A-Z", value: "name-asc" },
+	{ label: "Vehículo Z-A", value: "name-desc" },
+	{ label: "Año ascendente", value: "year-asc" },
+	{ label: "Año descendente", value: "year-desc" },
 ];
 
 export const getVehicleFields = (): FieldDef<VehicleRecord>[] => [
