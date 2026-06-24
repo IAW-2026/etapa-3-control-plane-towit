@@ -15,7 +15,7 @@ export const DISBURSEMENT_FILTER_OPTIONS: ControlOption[] = [
 	{ label: "Pendiente", value: "PENDING" },
 	{ label: "Completado", value: "COMPLETED" },
 	{ label: "Cancelado", value: "CANCELLED" },
-    { label: "Reembolsado", value: "REFUNDED" },
+	{ label: "Reembolsado", value: "REFUNDED" },
 ];
 
 export const getDisbursementFields = (): FieldDef<DisbursementRecord>[] => [
@@ -51,7 +51,7 @@ export const getDisbursementFields = (): FieldDef<DisbursementRecord>[] => [
 		fullWidth: true,
 		hrefTemplate: "/payment-system/disbursements?search={trip_id}"
 	},
-	{ label: "Conductor ID", accessorKey: "id_user" },
+	{ label: "Clerk ID", accessorKey: "clerk_id" },
 	{
 		label: "Fecha",
 		cell: (row) => (
@@ -63,8 +63,8 @@ export const getDisbursementFields = (): FieldDef<DisbursementRecord>[] => [
 	{
 		label: "Borrado en",
 		cell: (row) => (
-			row.deleted_at 
-				? <time suppressHydrationWarning className="text-rose-600 font-medium bg-rose-50 px-2 py-0.5 rounded-md">{new Date(row.deleted_at).toLocaleString('es-AR', { day: '2-digit', month: 'short' })}</time> 
+			row.deleted_at
+				? <time suppressHydrationWarning className="text-rose-600 font-medium bg-rose-50 px-2 py-0.5 rounded-md">{new Date(row.deleted_at).toLocaleString('es-AR', { day: '2-digit', month: 'short' })}</time>
 				: <span className="text-slate-300">-</span>
 		),
 	},
