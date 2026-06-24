@@ -10,7 +10,7 @@ export async function createDisbursementAction(formData: Record<string, any>) {
         // Adaptamos los nombres de los campos del formulario al contrato de la API
         const payload = {
             tripId: formData.trip_id,
-            clerkId: formData.id_user,
+            clerkId: formData.clerk_id,
             feePercentage: Number(formData.platform_fee), // Mapeado desde el input del formulario
         };
 

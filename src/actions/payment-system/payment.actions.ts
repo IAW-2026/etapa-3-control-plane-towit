@@ -9,7 +9,7 @@ export async function createPaymentAction(formData: Record<string, any>) {
 
         const payload = {
             tripId: formData.trip_id,
-            clerkId: formData.id_user,
+            clerkId: formData.clerk_id,
             amount: Number(formData.amount),
         };
 
