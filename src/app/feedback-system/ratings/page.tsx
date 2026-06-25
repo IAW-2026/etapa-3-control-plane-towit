@@ -7,7 +7,7 @@ interface PageProps {
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-async function fetchRatingsData(params: { page: number; limit: number; from?: string; to?: string; type?: string; sort?: string }) {
+async function fetchRatingsData(params: { page: number; limit: number; from?: string; to?: string; search?: string; type?: string; sort?: string }) {
 	const baseUrl = process.env.NEXT_PUBLIC_FEEDBACK_APP_URL;
 
 	if (!baseUrl) {
@@ -20,6 +20,7 @@ async function fetchRatingsData(params: { page: number; limit: number; from?: st
 
 	if (params.from) url.searchParams.append("from", params.from);
 	if (params.to) url.searchParams.append("to", params.to);
+	if (params.search) url.searchParams.append("search", params.search);
 
 	const response = await fetch(url.toString(), {
 		method: 'GET',
@@ -48,12 +49,13 @@ export default async function RatingsPage(props: PageProps) {
 	const to = (searchParams.to as string) || undefined;
 	const type = (searchParams.type as string) || undefined;
 	const sort = (searchParams.sort as string) || undefined;
+	const search = (searchParams.search as string) || undefined;
 
 	let paginatedRatings = [];
 	let totalPages = 0;
 
 	try {
-		const result = await fetchRatingsData({ page, limit, from, to, type, sort });
+		const result = await fetchRatingsData({ page, limit, from, to, search, type, sort });
 
 		paginatedRatings = result.data;
 		const total = result.total || 0;

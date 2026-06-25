@@ -7,7 +7,7 @@ interface PageProps {
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-async function fetchReportsData(params: { page: number; limit: number; from?: string; to?: string }) {
+async function fetchReportsData(params: { page: number; limit: number; from?: string; to?: string; search?: string }) {
 	const baseUrl = process.env.NEXT_PUBLIC_FEEDBACK_APP_URL;
 
 	if (!baseUrl) {
@@ -20,6 +20,7 @@ async function fetchReportsData(params: { page: number; limit: number; from?: st
 
 	if (params.from) url.searchParams.append("from", params.from);
 	if (params.to) url.searchParams.append("to", params.to);
+	if (params.search) url.searchParams.append("search", params.search);
 
 	const response = await fetch(url.toString(), {
 		method: 'GET',
@@ -46,12 +47,13 @@ export default async function ReportsPage(props: PageProps) {
 	const limit = Number(searchParams.limit) || 25;
 	const from = (searchParams.from as string) || undefined;
 	const to = (searchParams.to as string) || undefined;
+	const search = (searchParams.search as string) || undefined;
 
 	let paginatedReports = [];
 	let totalPages = 0;
 
 	try {
-		const result = await fetchReportsData({ page, limit, from, to });
+		const result = await fetchReportsData({ page, limit, from, to, search });
 
 		paginatedReports = result.data;
 		const total = result.total || 0;

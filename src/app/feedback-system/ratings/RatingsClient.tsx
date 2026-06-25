@@ -6,7 +6,7 @@ import ResourceControlBar from "@/component/ResourceControlBar";
 import { useResourceActions } from "@/hooks/useResourceActions";
 import { RatingRecord } from "./rating.types";
 import { RATING_SORT_OPTIONS, RATING_FILTER_OPTIONS, getRatingFields } from "./rating.ui";
-import { getRatingViewActions, RatingViewActionHandlers } from "./feedback.actions";
+import { getRatingViewActions, RatingViewActionHandlers } from "../feedback.actions";
 
 interface RatingsClientProps {
 	data: RatingRecord[];
