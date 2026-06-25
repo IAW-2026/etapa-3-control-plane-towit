@@ -26,6 +26,7 @@ const NAV_DROPDOWNS = [
     title: "Sistema de feedback",
     items: [
       { label: "Calificaciones", href: "/feedback-system/ratings", colorClass: "bg-yellow-500" },
+      { label: "Reportes", href: "/feedback-system/reports", colorClass: "bg-red-500" },
     ],
   },
 ] as const;
