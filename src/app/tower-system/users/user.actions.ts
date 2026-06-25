@@ -40,13 +40,19 @@ export const USER_FORM_CONFIGS = {
 	        { name: "full_name", label: "Nombre Completo", type: "text", required: false, placeholder: "Juan Pérez" },
 	        { name: "email", label: "Email", type: "text", required: false, placeholder: "juan@example.com" },
 	        { name: "payments_alias", label: "Alias de Pago", type: "text", required: false, placeholder: "alias.mp" },
+	        { name: "deactivated", label: "Usuario Desactivado", type: "boolean", required: false },
 	    ],
 	    execute: async (formData, selectedIds) => {
 	        if (!selectedIds || selectedIds.length === 0) return { success: false, message: "No hay gruista seleccionado." };
             if (selectedIds.length > 1) return { success: false, message: "Solo se puede editar un gruista a la vez." };
 
             const selectedId = selectedIds[0];
-	        const result = await updateUserAction(selectedId, formData);
+            const payload = { ...formData };
+            if (payload.deactivated !== undefined) {
+                payload.deactivated = payload.deactivated === 'true';
+            }
+
+	        const result = await updateUserAction(selectedId, payload);
 	        if (!result.success) {
 	            return { success: false, message: translateUserError(result.code, "No se pudo actualizar el gruista.") };
 	        }

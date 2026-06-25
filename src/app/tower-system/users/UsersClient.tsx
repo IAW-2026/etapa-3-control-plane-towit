@@ -39,6 +39,7 @@ export default function UsersClient({ data }: UsersClientProps) {
 				full_name: targetUser.full_name || '',
 				email: targetUser.email || '',
 				payments_alias: targetUser.payments_alias || '',
+				deactivated: targetUser.deactivated ? 'true' : 'false',
 			};
 		}
 	}
