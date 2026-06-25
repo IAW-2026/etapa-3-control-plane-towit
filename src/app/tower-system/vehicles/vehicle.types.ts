@@ -6,6 +6,7 @@ export interface VehicleRecord {
     max_load: number;
     tower_id: string;
     deactivated: boolean;
+    clerk_id?: string;
     createdAt?: string;
     updatedAt?: string;
 }

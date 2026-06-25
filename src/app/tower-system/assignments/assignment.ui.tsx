@@ -16,6 +16,10 @@ export const getAssignmentFields = (): FieldDef<AssignmentRecord>[] => [
 		accessorKey: "tower_id",
 	},
 	{
+		label: "Clerk ID (Tower)",
+		cell: (row) => <span className="font-mono text-xs text-slate-500" title={row.clerk_id}>{row.clerk_id ? row.clerk_id.substring(0, 12) + '...' : 'N/A'}</span>
+	},
+	{
 		label: "Estado",
 		accessorKey: "status",
 	},

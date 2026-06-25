@@ -38,6 +38,28 @@ export async function getVehiclesAction(
             return { success: false, code: 'INVALID_DATA_FORMAT' };
         }
 
+        const towersResponse = await fetch(`${baseUrl}/api/tower/towers`, {
+            method: 'GET',
+            headers: { 'x-api-key': process.env.INTERNAL_API_SECRET || '' },
+            cache: 'no-store'
+        });
+
+        if (towersResponse.ok) {
+            const towersData = await towersResponse.json();
+            const clerkMap: Record<string, string> = {};
+            if (towersData && Array.isArray(towersData.data)) {
+                towersData.data.forEach((t: any) => {
+                    if (t.tower_id && t.clerk_id) {
+                        clerkMap[t.tower_id] = t.clerk_id;
+                    }
+                });
+            }
+            allVehicles = allVehicles.map((v: any) => ({
+                ...v,
+                clerk_id: clerkMap[v.tower_id] || 'N/A'
+            }));
+        }
+
         // Apply filters
         if (status === 'ACTIVE') {
             allVehicles = allVehicles.filter((v: any) => !v.deactivated);

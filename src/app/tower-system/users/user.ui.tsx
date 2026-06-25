@@ -23,6 +23,11 @@ export const getUserFields = (): FieldDef<TowerRecord>[] => [
 		isPrimary: true
 	},
 	{
+		label: "ID de Tower",
+		accessorKey: "tower_id",
+		fullWidth: true
+	},
+	{
 		label: "Email",
 		accessorKey: "email",
 		fullWidth: true

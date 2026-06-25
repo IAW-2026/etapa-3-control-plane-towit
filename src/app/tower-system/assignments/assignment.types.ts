@@ -12,6 +12,7 @@ export interface AssignmentRecord {
     origin: string;
     destination: string;
     deactivated: boolean;
+    clerk_id?: string;
     createdAt?: string;
     updatedAt?: string;
 }
