@@ -1,8 +1,9 @@
-'use client'
-
 import React from "react";
 import HeaderLogo from "./HeaderLogo";
 import HeaderUserSection from "./HeaderUserSection";
+import { currentUser } from "@clerk/nextjs/server";
+import { Show, SignInButton, UserButton } from "@clerk/nextjs";
+import HeaderDropdown from "./HeaderDropdown";
 
 export default async function Header() {
 	const user = await currentUser();
