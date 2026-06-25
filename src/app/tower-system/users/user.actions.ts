@@ -27,7 +27,7 @@ export const USER_FORM_CONFIGS = {
 		execute: async (formData) => {
 			const result = await createUserAction(formData);
 			if (!result.success) {
-				return { success: false, message: translateUserError(result.code, "No se pudo crear el gruista.") };
+				return { success: false, message: translateUserError(result.code, result.code) };
 			}
 			return { success: true, message: "Gruista creado exitosamente." };
 		}
