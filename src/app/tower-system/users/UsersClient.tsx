@@ -1,5 +1,5 @@
 'use client'
-
+// Force fast refresh
 import React from "react";
 import CardDataView from "@/component/CardDataView";
 import ResourceControlBar from "@/component/ResourceControlBar";
