@@ -54,7 +54,7 @@ export default function UsersClient({ data }: UsersClientProps) {
 			/>
 
 			<CardDataView
-				title="Directorio de Gruistas"
+				title="Directorio de Towers"
 				data={data}
 				fields={fields}
 				actions={actions}

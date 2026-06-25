@@ -49,7 +49,8 @@ export async function getAdminsAction(
             const searchLower = search.toLowerCase();
             allAdmins = allAdmins.filter((a: any) => 
                 (a.full_name && a.full_name.toLowerCase().includes(searchLower)) ||
-                (a.email && a.email.toLowerCase().includes(searchLower))
+                (a.email && a.email.toLowerCase().includes(searchLower)) ||
+                (a.clerk_id && a.clerk_id.toLowerCase().includes(searchLower))
             );
         }
 

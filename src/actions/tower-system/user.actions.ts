@@ -49,7 +49,8 @@ export async function getUsersAction(
             const searchLower = search.toLowerCase();
             allUsers = allUsers.filter((u: any) => 
                 (u.full_name && u.full_name.toLowerCase().includes(searchLower)) ||
-                (u.email && u.email.toLowerCase().includes(searchLower))
+                (u.email && u.email.toLowerCase().includes(searchLower)) ||
+                (u.clerk_id && u.clerk_id.toLowerCase().includes(searchLower))
             );
         }
 

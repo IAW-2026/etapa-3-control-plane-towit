@@ -47,7 +47,7 @@ export default async function UsersPage(props: PageProps) {
     return (
         <div className="max-w-7xl mx-auto p-8">
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">Gestión de Gruistas (Towers)</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Gestión de Towers</h1>
                 <p className="text-gray-500 text-sm mt-1">Selecciona un usuario para aplicar operaciones y gestionar sus permisos.</p>
             </div>
 
