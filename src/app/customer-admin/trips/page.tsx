@@ -1,6 +1,7 @@
 import TripsClient from "./TripsClient";
 import PaginationControls from "@/component/PaginationControls";
 import { getTrips, TripRecord } from "@/lib/customer-api";
+import { getDriverName } from "@/lib/tower-api";
 
 export const dynamic = 'force-dynamic';
 
@@ -45,6 +46,16 @@ export default async function TripsPage(props: PageProps) {
 
   const { data: paginated, total: totalCount } = await getTrips({ page, limit, search: searchQuery, status: statusFilter });
 
+  const paginatedWithDriver = await Promise.all(
+    paginated.map(async (trip) => {
+      if (trip.towerId) {
+        const name = await getDriverName(trip.towerId);
+        return { ...trip, driverName: name ?? undefined };
+      }
+      return trip;
+    })
+  );
+
   const totalPages = Math.ceil(Number(totalCount) / limit);
 
   return (
@@ -54,7 +65,7 @@ export default async function TripsPage(props: PageProps) {
         <p className="text-gray-500 text-sm mt-1">Visualiza y administra los viajes solicitados por los clientes.</p>
       </div>
 
-      <TripsClient data={sortData(paginated, sort)} />
+      <TripsClient data={sortData(paginatedWithDriver, sort)} />
 
       {totalPages > 0 && (
         <PaginationControls totalPages={totalPages} currentPage={page} />
