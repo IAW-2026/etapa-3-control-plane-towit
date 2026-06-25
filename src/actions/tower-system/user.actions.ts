@@ -10,7 +10,13 @@ export interface ActionResponse {
     data?: any;
 }
 
-export async function getUsersAction(page: number = 1, limit: number = 10): Promise<ActionResponse> {
+export async function getUsersAction(
+    page: number = 1, 
+    limit: number = 10,
+    search?: string,
+    status?: string,
+    sort?: string
+): Promise<ActionResponse> {
     try {
         const baseUrl = process.env.TOWER_SYSTEM_URL || "http://localhost:3000";
         const response = await fetch(`${baseUrl}/api/tower/towers`, {
@@ -26,10 +32,43 @@ export async function getUsersAction(page: number = 1, limit: number = 10): Prom
             return { success: false, code: errorData?.error || 'UNKNOWN_ERROR' };
         }
 
-        const allUsers = (await response.json()).data;
+        let allUsers = (await response.json()).data;
 
         if (!Array.isArray(allUsers)) {
             return { success: false, code: 'INVALID_DATA_FORMAT' };
+        }
+
+        // Apply filters
+        if (status === 'ACTIVE') {
+            allUsers = allUsers.filter((u: any) => !u.deactivated);
+        } else if (status === 'DEACTIVATED') {
+            allUsers = allUsers.filter((u: any) => u.deactivated);
+        }
+
+        if (search) {
+            const searchLower = search.toLowerCase();
+            allUsers = allUsers.filter((u: any) => 
+                (u.full_name && u.full_name.toLowerCase().includes(searchLower)) ||
+                (u.email && u.email.toLowerCase().includes(searchLower))
+            );
+        }
+
+        // Apply sorting
+        if (sort) {
+            allUsers.sort((a: any, b: any) => {
+                switch (sort) {
+                    case 'created_asc':
+                        return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+                    case 'created_desc':
+                        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+                    case 'name_asc':
+                        return (a.full_name || '').localeCompare(b.full_name || '');
+                    case 'name_desc':
+                        return (b.full_name || '').localeCompare(a.full_name || '');
+                    default:
+                        return 0;
+                }
+            });
         }
 
         // Pagination

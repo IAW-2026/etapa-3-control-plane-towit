@@ -10,7 +10,7 @@ interface PageProps {
 }
 
 async function fetchUsersData(params: { page: number; limit: number; search?: string; status?: string; sort?: string }) {
-    const result = await getUsersAction(params.page, params.limit);
+    const result = await getUsersAction(params.page, params.limit, params.search, params.status, params.sort);
     if (!result.success) {
         throw new Error(result.code || "Error fetching users");
     }
