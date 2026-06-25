@@ -4,6 +4,6 @@ export interface AvgRatingRecord {
 	totalRatings: number;
 	updatedAt: string;
 	displayName: string;
-	firstName?: string;
-	lastName?: string;
+	firstName?: string | null;
+	lastName?: string | null;
 }
