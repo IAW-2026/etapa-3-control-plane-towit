@@ -44,7 +44,7 @@ export default function AdminsClient({ data }: AdminsClientProps) {
 	}
 
 	return (
-		<div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+		<div className="bg-white rounded-2xl overflow-hidden flex flex-col">
 			<ResourceControlBar
 				sortOptions={ADMIN_SORT_OPTIONS}
 				filterOptions={ADMIN_FILTER_OPTIONS}
@@ -55,10 +55,8 @@ export default function AdminsClient({ data }: AdminsClientProps) {
 				<CardDataView<AdminRecord>
 					data={data}
 					fields={fields}
-					idField="admin_id"
+					keyExtractor={(row) => row.admin_id}
 					actions={actions}
-					emptyMessage="No hay administradores registrados en el sistema."
-					onSelectionChange={() => {}}
 				/>
 			</div>
 
