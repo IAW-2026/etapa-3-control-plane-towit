@@ -40,6 +40,14 @@ export default async function Header() {
 										{ label : "Vehículos", href: "/customer-admin/vehicles", colorClass: "bg-amber-600" },
 									]}
 								/>
+								<HeaderDropdown 
+									title="Tower System" 
+									items={[
+										{ label : "Usuarios", href: "/tower-system/users", colorClass: "bg-teal-600" },
+										{ label : "Asignaciones", href: "/tower-system/assignments", colorClass: "bg-rose-600" },
+										{ label : "Vehículos", href: "/tower-system/vehicles", colorClass: "bg-yellow-600" },
+									]}
+								/>
 							</>
 						)}
 
