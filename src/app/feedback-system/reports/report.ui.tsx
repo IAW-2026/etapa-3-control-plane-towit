@@ -21,6 +21,19 @@ const STATUS_LABELS: Record<string, string> = {
 	dismissed: "Descartado",
 };
 
+const REASON_LABEL: Record<string, string> = {
+  unsafe_driving_or_towing: 'Conducción o remolque inseguro',
+  no_show_or_abandoned_trip: 'No se presentó o abandonó el viaje',
+  inappropriate_behavior: 'Comportamiento inapropiado',
+  vehicle_or_trip_mismatch: 'Vehículo o viaje no coincidente',
+  other: 'Otro',
+}
+
+function getReasonLabel(reason: string): string {
+  return REASON_LABEL[reason] ?? reason.replace(/_/g, ' ')
+}
+
+
 const STATUS_STYLES: Record<string, string> = {
 	unresolved: "bg-rose-100 text-rose-800 border-rose-200",
 	considered: "bg-amber-100 text-amber-800 border-amber-200",
@@ -49,7 +62,9 @@ export const getReportFields = (): FieldDef<ReportRecord>[] => [
 	{
 		label: "Motivo",
 		cell: (row) => (
-			<span className="font-medium text-slate-800 break-words" title={row.reason}>{row.reason}</span>
+			<span className="font-medium text-slate-800 break-words" title={getReasonLabel(row.reason)}>
+				{getReasonLabel(row.reason)}
+			</span>
 		),
 		fullWidth: true,
 	},
