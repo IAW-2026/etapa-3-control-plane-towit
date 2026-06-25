@@ -24,11 +24,24 @@ export default function UsersClient({ data }: UsersClientProps) {
 		messageState,
 		showMessage,
 		closeMessage,
-		refresh
+		refresh,
+		selectedIds
 	} = useResourceActions(USER_FORM_CONFIGS);
 
 	const fields = getUserFields();
 	const actions = getUserViewActions({ openFormAction, refresh, showMessage });
+
+	let initialData: Record<string, string> | undefined = undefined;
+	if (selectedIds && selectedIds.length === 1) {
+		const targetUser = data.find((u) => u.tower_id === selectedIds[0]);
+		if (targetUser) {
+			initialData = {
+				full_name: targetUser.full_name || '',
+				email: targetUser.email || '',
+				payments_alias: targetUser.payments_alias || '',
+			};
+		}
+	}
 
 	return (
 		<div>
@@ -56,6 +69,7 @@ export default function UsersClient({ data }: UsersClientProps) {
 					submitText={modalConfig.submitText}
 					onSubmit={handleFormSubmit}
 					onClose={closeModal}
+					initialData={initialData}
 				/>
 			)}
 

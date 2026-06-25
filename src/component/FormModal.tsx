@@ -20,6 +20,7 @@ interface DynamicFormModalProps {
 	submitText?: string;
 	onSubmit: (formData: Record<string, any>) => Promise<{ success: boolean; message: string }>;
 	onClose: () => void;
+	initialData?: Record<string, string>;
 }
 
 export default function DynamicFormModal({
@@ -29,9 +30,10 @@ export default function DynamicFormModal({
 	fields,
 	submitText = "Guardar",
 	onSubmit,
-	onClose
+	onClose,
+	initialData
 }: DynamicFormModalProps) {
-	const [formData, setFormData] = useState<Record<string, string>>({});
+	const [formData, setFormData] = useState<Record<string, string>>(initialData || {});
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -42,13 +44,13 @@ export default function DynamicFormModal({
 		return () => { document.body.style.overflow = 'unset'; }
 	}, [isOpen]);
 
-	// Resetear el formulario al abrir/cerrar
+	// Resetear el formulario al abrir/cerrar o si initialData cambia
 	useEffect(() => {
 		if (isOpen) {
-			setFormData({});
+			setFormData(initialData || {});
 			setErrorMsg(null);
 		}
-	}, [isOpen]);
+	}, [isOpen, initialData]);
 
 	if (!isOpen) return null;
 

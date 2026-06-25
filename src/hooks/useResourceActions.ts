@@ -73,6 +73,7 @@ export function useResourceActions<TAction extends string>(
 		refresh: router.refresh,
 		openFormAction,
 		closeModal,
-		handleFormSubmit
+		handleFormSubmit,
+		selectedIds: activeFormSelectedIds
 	};
 }
