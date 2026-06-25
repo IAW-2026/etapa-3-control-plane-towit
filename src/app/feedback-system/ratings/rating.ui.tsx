@@ -17,7 +17,7 @@ export const RATING_FILTER_OPTIONS: ControlOption[] = [
 ];
 
 const TYPE_LABELS: Record<string, string> = {
-	"tower_to_customer": "Tower al Customer",
+	"tower_to_customer": "Tower a Customer",
 	"customer_to_tower": "Customer a Tower",
 };
 

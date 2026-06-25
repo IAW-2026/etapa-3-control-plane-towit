@@ -6,6 +6,7 @@ import ResourceControlBar from "@/component/ResourceControlBar";
 import { useResourceActions } from "@/hooks/useResourceActions";
 import { RatingRecord } from "./rating.types";
 import { RATING_SORT_OPTIONS, RATING_FILTER_OPTIONS, getRatingFields } from "./rating.ui";
+import { getRatingViewActions, RatingViewActionHandlers } from "./feedback.actions";
 
 interface RatingsClientProps {
 	data: RatingRecord[];
@@ -14,7 +15,12 @@ interface RatingsClientProps {
 export default function RatingsClient({ data }: RatingsClientProps) {
 	const {
 		messageState,
+		showMessage,
+		refresh,
 	} = useResourceActions({});
+
+	const handlers: RatingViewActionHandlers = { refresh, showMessage };
+	const actions = getRatingViewActions(handlers);
 
 	const fields = getRatingFields();
 
@@ -31,7 +37,7 @@ export default function RatingsClient({ data }: RatingsClientProps) {
 				title="Historial de Calificaciones"
 				data={data}
 				fields={fields}
-				actions={[]}
+				actions={actions}
 				keyExtractor={(row) => String(row.id)}
 			/>
 
