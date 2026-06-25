@@ -1,6 +1,7 @@
 import UsersClient from "./UsersClient";
 import PaginationControls from "@/component/PaginationControls";
 import { TowerRecord } from "./user.types";
+import { getUsersAction } from "@/actions/tower-system/user.actions";
 
 export const dynamic = 'force-dynamic';
 
@@ -9,32 +10,23 @@ interface PageProps {
 }
 
 async function fetchUsersData(params: { page: number; limit: number; search?: string; status?: string; sort?: string }) {
-    // MOCK DATA: Generamos 20 registros falsos para probar la interfaz
-    const mockData: TowerRecord[] = Array.from({ length: 20 }, (_, i) => ({
-        tower_id: `tow_${1000 + i}`,
-        clerk_id: `user_2Q${Math.random().toString(36).substring(2, 10)}`,
-        email: `gruista${i + 1}@example.com`,
-        full_name: `Gruista ${i + 1} de Prueba`,
-        payments_alias: i % 3 === 0 ? `alias.gruista${i + 1}.mp` : null,
-        deactivated: i % 5 === 0, // 1 de cada 5 estará desactivado
-        createdAt: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
-        updatedAt: new Date().toISOString(),
-    }));
-
-    // Simulamos un delay de red para que sea más realista
-    await new Promise(resolve => setTimeout(resolve, 500));
+    const result = await getUsersAction(params.page, params.limit);
+    if (!result.success) {
+        throw new Error(result.code || "Error fetching users");
+    }
 
     return {
-        data: mockData,
-        meta: { totalPages: 1 } // Simulamos que todo cabe en una página
+        data: result.data.users,
+        meta: { totalPages: result.data.meta.totalPages }
     };
 }
+
 
 export default async function UsersPage(props: PageProps) {
     const searchParams = await props.searchParams;
 
     const page = Number(searchParams.page) || 1;
-    const limit = Number(searchParams.limit) || 25;
+    const limit = Number(searchParams.limit) || 10;
     const search = (searchParams.search as string) || undefined;
     const status = (searchParams.status as string) || undefined;
     const sort = (searchParams.sort as string) || undefined;
