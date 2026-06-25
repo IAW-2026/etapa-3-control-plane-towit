@@ -1,0 +1,98 @@
+import { ActionDef } from "@/component/CardDataView";
+import { createUserAction, updateUserAction, deleteUserAction } from "@/actions/tower-system/user.actions";
+import { ActionStrategy } from "@/hooks/useResourceActions";
+
+export function translateUserError(code?: string, fallbackMessage?: string): string {
+	switch (code) {
+		case 'UNKNOWN_ERROR':
+			return "Ocurrió un error desconocido. Intenta nuevamente.";
+		case 'SERVER_ACTION_ERROR':
+			return "Error de comunicación con el servidor.";
+		default:
+			return fallbackMessage || code || "Se rechazó la solicitud debido a un error.";
+	}
+}
+
+export const USER_FORM_CONFIGS = {
+	CREATE_USER: {
+		title: "Crear Nuevo Gruista",
+		description: "Ingresa los datos para registrar un nuevo gruista (Tower).",
+		submitText: "Crear Gruista",
+		fields: [
+			{ name: "firstName", label: "Nombre", type: "text", required: true, placeholder: "Juan" },
+			{ name: "lastName", label: "Apellido", type: "text", required: true, placeholder: "Pérez" },
+			{ name: "emailAddress", label: "Email", type: "text", required: true, placeholder: "juan@example.com" },
+			{ name: "password", label: "Contraseña", type: "text", required: true, placeholder: "Mínimo 8 caracteres" },
+		],
+		execute: async (formData) => {
+			const result = await createUserAction(formData);
+			if (!result.success) {
+				return { success: false, message: translateUserError(result.code, "No se pudo crear el gruista.") };
+			}
+			return { success: true, message: "Gruista creado exitosamente." };
+		}
+	},
+	// EDIT_USER: {
+	//     title: "Editar Gruista",
+	//     description: "Modifica los datos del gruista. Solo se actualizarán los campos que modifiques.",
+	//     submitText: "Guardar Cambios",
+	//     fields: [
+	//         { name: "full_name", label: "Nombre Completo", type: "text", required: false, placeholder: "Juan Pérez" },
+	//         { name: "email", label: "Email", type: "text", required: false, placeholder: "juan@example.com" },
+	//         { name: "payments_alias", label: "Alias de Pago", type: "text", required: false, placeholder: "alias.mp" },
+	//         // Since our dynamic form supports mostly text/number, if we need boolean we could use a text 'true'/'false' or handle it uniquely.
+	//         // For now we'll rely on text or skip deactivated here if we just want basic edits. 
+	//     ],
+	//     execute: async (formData, selectedId) => {
+	//         if (!selectedId) return { success: false, message: "No hay gruista seleccionado." };
+	//         const result = await updateUserAction(selectedId, formData);
+	//         if (!result.success) {
+	//             return { success: false, message: translateUserError(result.code, "No se pudo actualizar el gruista.") };
+	//         }
+	//         return { success: true, message: "Gruista actualizado exitosamente." };
+	//     }
+	// }
+} satisfies Record<string, ActionStrategy>;
+
+export type UserFormAction = keyof typeof USER_FORM_CONFIGS;
+
+export interface UserViewActionHandlers {
+	openFormAction: (actionName: UserFormAction) => Promise<any>;
+	refresh: () => void;
+	showMessage: (title: string, message: string, type: 'success' | 'error') => void;
+}
+
+export const getUserViewActions = (handlers: UserViewActionHandlers): ActionDef[] => [
+	{
+		label: "Crear Nuevo Gruista",
+		variant: "primary",
+		requireSelection: false,
+		onAction: () => handlers.openFormAction('CREATE_USER')
+	},
+	// {
+	// 	label: "Editar Seleccionado",
+	// 	variant: "secondary",
+	// 	requireSelection: true,
+	// 	onAction: () => handlers.openFormAction('EDIT_USER')
+	// },
+	{
+		label: "Eliminar Seleccionado",
+		variant: "danger",
+		requireSelection: true,
+		onAction: async (selectedId: string | null) => {
+			if (!selectedId) return null;
+
+			const result = await deleteUserAction(selectedId);
+
+			if (result.success) {
+				handlers.showMessage("Gruista Eliminado", "El gruista se eliminó correctamente.", "success");
+				handlers.refresh();
+			} else {
+				const errorMsg = translateUserError(result.code, "No se pudo eliminar el gruista.");
+				handlers.showMessage("Error al eliminar", errorMsg, "error");
+			}
+
+			return null;
+		}
+	}
+];
