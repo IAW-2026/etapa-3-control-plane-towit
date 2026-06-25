@@ -37,19 +37,19 @@ export default function ResourceControlBar({
 }: ResourceControlBarProps) {
     
     return (
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between w-full bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-6">
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between w-full bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-6">
             
-            {/* 1. BUSCADOR (Se expande para ocupar el espacio disponible) */}
+            {/* 1. BUSCADOR */}
             <div className="w-full md:flex-1">
                 <SearchBar placeholder={searchPlaceholder} />
             </div>
 
             {/* CONTROLES DE FILTRADO Y ORDENAMIENTO */}
-            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:flex-1">
                 
                 {/* 2. FILTRADO (Renderizado condicional seguro) */}
                 {filterOptions.length > 0 && (
-                    <div className="w-full sm:w-48">
+                    <div className="w-full sm:flex-1">
                         <Dropdown 
                             mode="filter"
                             paramKey={filterParamKey}
@@ -66,7 +66,7 @@ export default function ResourceControlBar({
 
                 {/* 3. ORDENAMIENTO (Renderizado condicional seguro) */}
                 {sortOptions.length > 0 && (
-                    <div className="w-full sm:w-56">
+                    <div className="w-full sm:flex-1">
                         <Dropdown 
                             mode="sort"
                             paramKey={sortParamKey}

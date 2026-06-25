@@ -36,14 +36,14 @@ export default function PaginationControls({ totalPages, currentPage }: Paginati
 						<button
 							onClick={() => router.push(createPageURL(currentPage - 1))}
 							disabled={isFirstPage}
-							className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+							className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
 						>
 							Anterior
 						</button>
 						<button
 							onClick={() => router.push(createPageURL(currentPage + 1))}
 							disabled={isLastPage}
-							className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+							className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
 						>
 							Siguiente
 						</button>
@@ -56,14 +56,14 @@ export default function PaginationControls({ totalPages, currentPage }: Paginati
 				<button
 					onClick={() => router.push(createPageURL(currentPage - 1))}
 					disabled={isFirstPage}
-					className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+					className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 cursor-pointer"
 				>
 					Anterior
 				</button>
 				<button
 					onClick={() => router.push(createPageURL(currentPage + 1))}
 					disabled={isLastPage}
-					className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+					className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 cursor-pointer"
 				>
 					Siguiente
 				</button>

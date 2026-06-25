@@ -35,7 +35,7 @@ export default function SearchBar({ placeholder }: SearchBarProps) {
     return (
         <form 
             onSubmit={handleSearch} 
-            className="relative w-full max-w-md mx-auto group"
+            className="relative w-full max-w-full md:max-w-md mx-auto md:mx-0 group"
         >
             <input
                 type="text"
