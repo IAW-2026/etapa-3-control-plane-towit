@@ -76,20 +76,32 @@ export const getUserViewActions = (handlers: UserViewActionHandlers): ActionDef[
 	// 	onAction: () => handlers.openFormAction('EDIT_USER')
 	// },
 	{
-		label: "Eliminar Seleccionado",
+		label: "Eliminar Seleccionados",
 		variant: "danger",
 		requireSelection: true,
-		onAction: async (selectedId: string | null) => {
-			if (!selectedId) return null;
+		onAction: async (selectedIds: string[]) => {
+			if (!selectedIds || selectedIds.length === 0) return null;
 
-			const result = await deleteUserAction(selectedId);
+			let successCount = 0;
+			let failCount = 0;
 
-			if (result.success) {
-				handlers.showMessage("Gruista Eliminado", "El gruista se eliminó correctamente.", "success");
-				handlers.refresh();
+			for (const id of selectedIds) {
+				const result = await deleteUserAction(id);
+				if (result.success) {
+					successCount++;
+				} else {
+					failCount++;
+				}
+			}
+
+			handlers.refresh();
+
+			if (failCount === 0) {
+				handlers.showMessage("Gruistas Eliminados", `Se eliminaron (desactivaron) ${successCount} usuarios correctamente.`, "success");
+			} else if (successCount === 0) {
+				handlers.showMessage("Error al eliminar", `No se pudieron eliminar los ${failCount} usuarios seleccionados.`, "error");
 			} else {
-				const errorMsg = translateUserError(result.code, "No se pudo eliminar el gruista.");
-				handlers.showMessage("Error al eliminar", errorMsg, "error");
+				handlers.showMessage("Eliminación Parcial", `Se eliminaron ${successCount} usuarios. No se pudieron eliminar ${failCount}.`, "error");
 			}
 
 			return null;

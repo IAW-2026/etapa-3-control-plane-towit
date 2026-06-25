@@ -39,7 +39,7 @@ export default async function Header() {
 									]}
 								/>
 								<HeaderDropdown
-									title="Tower System"
+									title="Towers App"
 									items={[
 										{ label: "Usuarios", href: "/tower-system/users", colorClass: "bg-teal-600" },
 										{ label: "Asignaciones", href: "/tower-system/assignments", colorClass: "bg-rose-600" },

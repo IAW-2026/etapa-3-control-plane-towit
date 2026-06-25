@@ -1,6 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache";
+import { clerkClient } from "@clerk/nextjs/server";
 
 export type ActionErrorCode = string;
 
@@ -103,8 +104,21 @@ export async function getUsersAction(
 
 export async function createUserAction(formData: Record<string, any>): Promise<ActionResponse> {
     try {
-        const baseUrl = process.env.TOWER_SYSTEM_URL || "http://localhost:3000"; // Adjust to the actual internal base URL
+        const baseUrl = process.env.TOWER_SYSTEM_URL || "http://localhost:3000";
 
+        // 1. Crear el usuario en Clerk con el rol 'tower'
+        const clerk = await clerkClient();
+        const clerkUser = await clerk.users.createUser({
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            emailAddress: [formData.emailAddress],
+            password: formData.password,
+            publicMetadata: {
+                role: "tower"
+            }
+        });
+
+        // 2. Enviar los datos a la API basándonos en el esquema definido en los endpoints
         const payload = {
             firstName: formData.firstName,
             lastName: formData.lastName,
@@ -123,6 +137,9 @@ export async function createUserAction(formData: Record<string, any>): Promise<A
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => null);
+            // Intentar eliminar al usuario en Clerk si la API falla (rollback básico)
+            try { await clerk.users.deleteUser(clerkUser.id); } catch(e) {}
+            
             return { success: false, code: errorData?.error || 'UNKNOWN_ERROR' };
         }
 
@@ -172,11 +189,14 @@ export async function deleteUserAction(towerId: string): Promise<ActionResponse>
     try {
         const baseUrl = process.env.TOWER_SYSTEM_URL || "http://localhost:3000";
 
+        // Hacer un soft delete actualizando deactivated a true
         const res = await fetch(`${baseUrl}/api/tower/towers/${towerId}`, {
-            method: 'DELETE',
+            method: 'PATCH',
             headers: {
+                'Content-Type': 'application/json',
                 'x-api-key': process.env.INTERNAL_API_SECRET || ''
-            }
+            },
+            body: JSON.stringify({ deactivated: true })
         });
 
         if (!res.ok) {
