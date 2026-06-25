@@ -76,7 +76,8 @@ export async function getAssignmentsAction(
             allAssignments = allAssignments.filter((a: any) => 
                 (a.assignment_id && a.assignment_id.toLowerCase().includes(searchLower)) ||
                 (a.trip_id && a.trip_id.toLowerCase().includes(searchLower)) ||
-                (a.tower_id && a.tower_id.toLowerCase().includes(searchLower))
+                (a.tower_id && a.tower_id.toLowerCase().includes(searchLower)) ||
+                (a.clerk_id && a.clerk_id.toLowerCase().includes(searchLower))
             );
         }
 

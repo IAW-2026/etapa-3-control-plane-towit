@@ -73,7 +73,8 @@ export async function getVehiclesAction(
                 (v.brand && v.brand.toLowerCase().includes(searchLower)) ||
                 (v.model && v.model.toLowerCase().includes(searchLower)) ||
                 (v.vehicle_id && v.vehicle_id.toLowerCase().includes(searchLower)) ||
-                (v.tower_id && v.tower_id.toLowerCase().includes(searchLower))
+                (v.tower_id && v.tower_id.toLowerCase().includes(searchLower)) ||
+                (v.clerk_id && v.clerk_id.toLowerCase().includes(searchLower))
             );
         }
 
