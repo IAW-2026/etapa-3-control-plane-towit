@@ -5,6 +5,7 @@ interface ApiOptions {
   page?: number;
   limit?: number;
   search?: string;
+  clerkId?: string;
   status?: string;
   sort?: string;
 }
@@ -14,6 +15,7 @@ async function fetchApi<T>(path: string, options?: ApiOptions): Promise<T> {
   if (options?.page) params.set("page", String(options.page));
   if (options?.limit) params.set("limit", String(options.limit));
   if (options?.search) params.set("search", options.search);
+  if (options?.clerkId) params.set("clerkId", options.clerkId);
   if (options?.status) params.set("status", options.status);
   if (options?.sort) params.set("sort", options.sort);
 
