@@ -6,7 +6,7 @@ import ResourceControlBar from "@/component/ResourceControlBar";
 import { useResourceActions } from "@/hooks/useResourceActions";
 import { ReportRecord } from "./report.types";
 import { REPORT_SORT_OPTIONS, REPORT_FILTER_OPTIONS, getReportFields } from "./report.ui";
-import { getReportViewActions, ReportViewActionHandlers } from "./report.actions";
+import { getReportViewDropdowns, ReportViewActionHandlers } from "./report.actions";
 
 interface ReportsClientProps {
 	data: ReportRecord[];
@@ -20,7 +20,7 @@ export default function ReportsClient({ data }: ReportsClientProps) {
 	} = useResourceActions({});
 
 	const handlers: ReportViewActionHandlers = { refresh, showMessage };
-	const actions = getReportViewActions(handlers);
+	const dropdowns = getReportViewDropdowns(handlers);
 
 	const fields = getReportFields();
 
@@ -38,7 +38,7 @@ export default function ReportsClient({ data }: ReportsClientProps) {
 				title="Reportes de Feedback"
 				data={data}
 				fields={fields}
-				actions={actions}
+				dropdowns={dropdowns}
 				keyExtractor={(row) => String(row.id)}
 			/>
 

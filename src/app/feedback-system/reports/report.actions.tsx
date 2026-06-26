@@ -1,4 +1,4 @@
-import { ActionDef } from "@/component/CardDataView";
+import { ActionDef, DropdownActionDef } from "@/component/CardDataView";
 import { updateReportStatusAction } from "@/actions/feedback/reports.actions";
 
 export function translateReportError(code?: string, fallbackMessage?: string): string {
@@ -86,5 +86,71 @@ export const getReportViewActions = (handlers: ReportViewActionHandlers): Action
 			handlers.refresh();
 			return null;
 		}
+	},
+];
+
+export const getReportViewDropdowns = (handlers: ReportViewActionHandlers): DropdownActionDef[] => [
+	{
+		label: "Cambiar estado",
+		requireSelection: true,
+		options: [
+			{
+				label: "Considerado",
+				onAction: async (selectedIds: string[]) => {
+					if (selectedIds.length === 0) return null;
+
+					for (const id of selectedIds) {
+						const result = await updateReportStatusAction(id, "considered");
+						if (!result.success) {
+							const errorMsg = translateReportError(result.code, "No se pudo marcar como considerado.");
+							handlers.showMessage("Error al actualizar", errorMsg, "error");
+							return null;
+						}
+					}
+
+					handlers.showMessage("Estado actualizado", `${selectedIds.length} reporte${selectedIds.length > 1 ? 's' : ''} marcado${selectedIds.length > 1 ? 's' : ''} como considerado.`, "success");
+					handlers.refresh();
+					return null;
+				}
+			},
+			{
+				label: "Descartar",
+				onAction: async (selectedIds: string[]) => {
+					if (selectedIds.length === 0) return null;
+
+					for (const id of selectedIds) {
+						const result = await updateReportStatusAction(id, "dismissed");
+						if (!result.success) {
+							const errorMsg = translateReportError(result.code, "No se pudo descartar el reporte.");
+							handlers.showMessage("Error al actualizar", errorMsg, "error");
+							return null;
+						}
+					}
+
+					handlers.showMessage("Estado actualizado", `${selectedIds.length} reporte${selectedIds.length > 1 ? 's' : ''} descartado${selectedIds.length > 1 ? 's' : ''}.`, "success");
+					handlers.refresh();
+					return null;
+				}
+			},
+			{
+				label: "Reabrir",
+				onAction: async (selectedIds: string[]) => {
+					if (selectedIds.length === 0) return null;
+
+					for (const id of selectedIds) {
+						const result = await updateReportStatusAction(id, "unresolved");
+						if (!result.success) {
+							const errorMsg = translateReportError(result.code, "No se pudo reabrir el reporte.");
+							handlers.showMessage("Error al actualizar", errorMsg, "error");
+							return null;
+						}
+					}
+
+					handlers.showMessage("Estado actualizado", `${selectedIds.length} reporte${selectedIds.length > 1 ? 's' : ''} reabierto${selectedIds.length > 1 ? 's' : ''}.`, "success");
+					handlers.refresh();
+					return null;
+				}
+			},
+		],
 	},
 ];
