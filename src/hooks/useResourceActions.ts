@@ -7,7 +7,7 @@ export interface ActionStrategy {
 	description: string;
 	submitText: string;
 	fields: FormFieldDef[];
-	execute: (formData: Record<string, any>) => Promise<{ success: boolean; message: string }>;
+	execute: (formData: Record<string, any>, selectedIds?: string[]) => Promise<{ success: boolean; message: string }>;
 }
 
 export function useResourceActions<TAction extends string>(
@@ -15,6 +15,7 @@ export function useResourceActions<TAction extends string>(
 ) {
 	const router = useRouter();
 	const [activeForm, setActiveForm] = useState<TAction | null>(null);
+	const [activeFormSelectedIds, setActiveFormSelectedIds] = useState<string[] | undefined>(undefined);
 	const promiseResolver = useRef<((value: { success: boolean; message: string } | null) => void) | null>(null);
 
 	const [messageState, setMessageState] = useState<{
@@ -30,8 +31,9 @@ export function useResourceActions<TAction extends string>(
 
 	const closeMessage = () => setMessageState(prev => ({ ...prev, isOpen: false }));
 
-	const openFormAction = (actionName: TAction) => {
+	const openFormAction = (actionName: TAction, selectedIds?: string[]) => {
 		setActiveForm(actionName);
+		setActiveFormSelectedIds(selectedIds);
 		return new Promise<{ success: boolean; message: string } | null>((resolve) => {
 			promiseResolver.current = resolve;
 		});
@@ -39,6 +41,7 @@ export function useResourceActions<TAction extends string>(
 
 	const closeModal = () => {
 		setActiveForm(null);
+		setActiveFormSelectedIds(undefined);
 		if (promiseResolver.current) {
 			promiseResolver.current(null); // Cancelación silenciosa
 			promiseResolver.current = null;
@@ -49,7 +52,7 @@ export function useResourceActions<TAction extends string>(
 		if (!activeForm) return { success: false, message: "Acción inválida" };
 
 		// Ejecutamos la lógica específica de la acción seleccionada
-		const result = await strategies[activeForm as Exclude<TAction, null>].execute(formData);
+		const result = await strategies[activeForm as Exclude<TAction, null>].execute(formData, activeFormSelectedIds);
 
 		if (result.success && promiseResolver.current) {
 			promiseResolver.current({ success: true, message: result.message });
@@ -70,6 +73,7 @@ export function useResourceActions<TAction extends string>(
 		refresh: router.refresh,
 		openFormAction,
 		closeModal,
-		handleFormSubmit
+		handleFormSubmit,
+		selectedIds: activeFormSelectedIds
 	};
 }

@@ -22,17 +22,27 @@ export type ActionDef = {
   onAction: (selectedIds: string[]) => Promise<{ success: boolean; message?: string } | null>;
 };
 
+export type DropdownActionDef = {
+  label: string;
+  requireSelection?: boolean;
+  options: {
+    label: string;
+    onAction: (selectedIds: string[]) => Promise<{ success: boolean; message?: string } | null>;
+  }[];
+};
+
 interface CardDataViewProps<T> {
   data: T[];
   fields: FieldDef<T>[];
   actions?: ActionDef[];
+  dropdowns?: DropdownActionDef[];
   keyExtractor: (row: T) => string;
   title?: string;
 }
 
 // COMPONENTE PRINCIPAL 
-export default function CardDataView<T>({ data, fields, actions = [], keyExtractor, title }: CardDataViewProps<T>) {
-  const hasActions = actions.length > 0;
+export default function CardDataView<T>({ data, fields, actions = [], dropdowns = [], keyExtractor, title }: CardDataViewProps<T>) {
+  const hasActions = actions.length > 0 || dropdowns.length > 0;
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const toggleSelection = (id: string) => {
@@ -49,7 +59,7 @@ export default function CardDataView<T>({ data, fields, actions = [], keyExtract
 
   return (
     <div className="space-y-6">
-      <DataToolbar selectedIds={selectedIds} actions={actions} title={title} />
+      <DataToolbar selectedIds={selectedIds} actions={actions} dropdowns={dropdowns} title={title} />
 
       <DataGrid 
         data={data} 
@@ -63,7 +73,7 @@ export default function CardDataView<T>({ data, fields, actions = [], keyExtract
 }
 
 // --- SUB-COMPONENTE: TOOLBAR ---
-function DataToolbar({ selectedIds, actions, title }: { selectedIds: Set<string>, actions: ActionDef[], title?: string }) {
+function DataToolbar({ selectedIds, actions, dropdowns = [], title }: { selectedIds: Set<string>, actions: ActionDef[], dropdowns?: DropdownActionDef[], title?: string }) {
   const [isProcessing, setIsProcessing] = useState(false);
   
   const [modalState, setModalState] = useState<{ 
@@ -80,13 +90,13 @@ function DataToolbar({ selectedIds, actions, title }: { selectedIds: Set<string>
 
   const closeModal = () => setModalState(prev => ({ ...prev, isOpen: false }));
 
-  const handleActionClick = async (action: ActionDef) => {
-    if (action.requireSelection && selectedIds.size === 0) return;
+  const executeAction = async (onAction: ActionDef['onAction'], requireSelection: boolean) => {
+    if (requireSelection && selectedIds.size === 0) return;
     
     setIsProcessing(true);
     
     const selectedArray = Array.from(selectedIds);
-    const result = await action.onAction(selectedArray);
+    const result = await onAction(selectedArray);
     
     setIsProcessing(false);
 
@@ -98,6 +108,19 @@ function DataToolbar({ selectedIds, actions, title }: { selectedIds: Set<string>
       title: result.success ? 'Operación Exitosa' : 'Atención',
       message: result.message || (result.success ? 'La operación se procesó correctamente.' : 'No se pudo completar la operación.')
     });
+  };
+
+  const handleActionClick = async (action: ActionDef) => {
+    await executeAction(action.onAction, !!action.requireSelection);
+  };
+
+  const handleDropdownChange = async (dropdown: DropdownActionDef, e: React.ChangeEvent<HTMLSelectElement>) => {
+    const idx = parseInt(e.currentTarget.value, 10);
+    if (isNaN(idx)) return;
+    
+    e.currentTarget.value = '';
+    
+    await executeAction(dropdown.options[idx].onAction, !!dropdown.requireSelection);
   };
 
   const hasSelection = selectedIds.size > 0;
@@ -114,6 +137,25 @@ function DataToolbar({ selectedIds, actions, title }: { selectedIds: Set<string>
       </div>
       
       <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+        {dropdowns.map((dd, idx) => {
+          const isDisabled = (dd.requireSelection && !hasSelection) || isProcessing;
+          const ddBaseStyles = "w-full sm:w-auto px-4 py-2 text-sm font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 bg-white text-slate-700 border border-slate-300 hover:border-slate-400 focus:ring-indigo-500 appearance-none";
+          
+          return (
+            <select
+              key={`dd-${idx}`}
+              defaultValue=""
+              onChange={(e) => handleDropdownChange(dd, e)}
+              disabled={isDisabled}
+              className={ddBaseStyles}
+            >
+              <option value="" disabled>{dd.label}</option>
+              {dd.options.map((opt, i) => (
+                <option key={i} value={i}>{opt.label}</option>
+              ))}
+            </select>
+          );
+        })}
         {actions.map((action, idx) => {
           const isDisabled = (action.requireSelection && !hasSelection) || isProcessing;
           
