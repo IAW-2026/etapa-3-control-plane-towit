@@ -46,8 +46,9 @@ export default function DataCard<T>({ item, fields, isSelected, onToggle }: Data
           let content = field.cell ? field.cell(item) : String(item[field.accessorKey as keyof T] ?? 'N/A');
 
           if (field.hrefTemplate) {
-            const resolvedHref = field.hrefTemplate.replace(/{(\w+)}/g, (_, key) => {
-              return String(item[key as keyof T] ?? '');
+            const resolvedHref = field.hrefTemplate.replace(/{([\w.]+)}/g, (_, path) => {
+              const value = path.split('.').reduce((obj: any, key: string) => obj?.[key], item);
+              return String(value ?? '');
             });
 
             content = (
