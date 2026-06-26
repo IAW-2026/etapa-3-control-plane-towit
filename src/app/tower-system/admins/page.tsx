@@ -4,21 +4,19 @@ import PaginationControls from "@/component/PaginationControls";
 import { getAdminsAction } from "@/actions/tower-system/admin.actions";
 import { AdminRecord } from "./admin.types";
 
+export const dynamic = 'force-dynamic';
+
 interface PageProps {
-    searchParams: {
-        page?: string;
-        search?: string;
-        status?: string;
-        sort?: string;
-    }
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default async function AdminsPage({ searchParams }: PageProps) {
+export default async function AdminsPage(props: PageProps) {
+    const searchParams = await props.searchParams;
     // 1. Extraer los searchParams
     const page = Number(searchParams.page) || 1;
-    const search = searchParams.search || '';
-    const status = searchParams.status || 'ALL';
-    const sort = searchParams.sort || 'created_desc';
+    const search = (searchParams.search as string) || '';
+    const status = (searchParams.status as string) || 'ALL';
+    const sort = (searchParams.sort as string) || 'created_desc';
     const limit = 10;
 
     let paginatedAdmins: AdminRecord[] = [];
