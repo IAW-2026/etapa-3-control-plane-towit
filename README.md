@@ -8,3 +8,11 @@ Panel administrativo centralizado (Etapa 3): gestión unificada de todas las app
 ---
 
 Enunciado completo: <https://iaw-2026.github.io/proyecto/>
+
+Deploy del sistema: [etapa-3-control-plane-towit.vercel.app](https://etapa-3-control-plane-towit.vercel.app/)
+
+Usuario de prueba:
+
+email: admin+clerk_test@iaw.com
+
+ontraseña: iawuser#
