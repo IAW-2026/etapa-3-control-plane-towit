@@ -49,19 +49,28 @@ export const getTripFields = (): FieldDef<TripRecord>[] => [
 	},
 	{
 		label: "Cliente",
-		accessorKey: "customerName",
-		hrefTemplate: "/customer-admin/customers?search={customerName}",
+		cell: (row) => {
+			const clerk = row.clerkId ?? (row as unknown as Record<string, unknown>).clerk_id;
+			if (!clerk) return <span className="text-sm text-slate-700">{row.customerName}</span>;
+			return <span className="font-mono text-sm text-slate-700">{String(clerk)}</span>;
+		},
+		hrefTemplate: "/customer-admin/customers?search={clerkId}",
 	},
 	{
 		label: "Vehículo",
-		cell: (row) => <span className="text-sm text-slate-700">#{row.vehicleId}</span>,
-		hrefTemplate: "/customer-admin/vehicles?search={customerName}",
+		cell: (row) => {
+			const vid = row.vehicleId ?? (row as unknown as Record<string, unknown>).vehicle_id;
+			const name = [row.vehicleBrand, row.vehicleModel].filter(Boolean).join(' ');
+			return <span className="text-sm text-slate-700">#{vid}{name ? ` - ${name}` : ''}</span>;
+		},
+		hrefTemplate: "/customer-admin/vehicles?search={vehicleId}",
 	},
 	{
 		label: "Conductor",
 		cell: (row) => {
-			if (!row.driverName) return <span className="text-xs text-slate-400 italic">—</span>;
-			return <span className="text-sm text-slate-700">{row.driverName}</span>;
+			if (!row.driverClerkId && !row.driverName) return <span className="text-xs text-slate-400 italic">—</span>;
+			const display = row.driverClerkId || row.driverName;
+			return <span className="font-mono text-sm text-slate-700">{display}</span>;
 		},
 	},
 	{

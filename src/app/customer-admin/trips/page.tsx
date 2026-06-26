@@ -1,7 +1,7 @@
 import TripsClient from "./TripsClient";
 import PaginationControls from "@/component/PaginationControls";
 import { getTrips, TripRecord } from "@/lib/customer-api";
-import { getDriverName } from "@/lib/tower-api";
+import { getDriverInfo } from "@/lib/tower-api";
 
 export const dynamic = 'force-dynamic';
 
@@ -48,9 +48,14 @@ export default async function TripsPage(props: PageProps) {
 
   const paginatedWithDriver = await Promise.all(
     paginated.map(async (trip) => {
-      if (trip.towerId) {
-        const name = await getDriverName(trip.towerId);
-        return { ...trip, driverName: name ?? undefined };
+      const rawTowerId = (trip as unknown as Record<string, unknown>).towerId ?? (trip as unknown as Record<string, unknown>).tower_id;
+      const towerId = Number(rawTowerId);
+      if (rawTowerId && !isNaN(towerId)) {
+        const info = await getDriverInfo(towerId);
+        return { ...trip, driverName: info?.name ?? undefined, driverClerkId: info?.clerkId ?? undefined };
+      }
+      if (rawTowerId && isNaN(towerId)) {
+        console.error(`Invalid towerId value for trip #${trip.tripId}:`, rawTowerId);
       }
       return trip;
     })

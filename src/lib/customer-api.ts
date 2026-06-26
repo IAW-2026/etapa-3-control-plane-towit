@@ -59,9 +59,13 @@ export interface TripRecord {
   tripId: number;
   customerId: number;
   customerName: string;
+  clerkId?: string;
   vehicleId: number;
+  vehicleBrand?: string;
+  vehicleModel?: string;
   towerId?: number;
   driverName?: string;
+  driverClerkId?: string;
   originChar: string;
   destinationChar: string;
   date: string;
@@ -88,7 +92,15 @@ export interface PaginatedResponse<T> {
 }
 
 export async function getDashboard(): Promise<DashboardData> {
-  return fetchApi<DashboardData>("/dashboard");
+  const url = `${CUSTOMER_APP_URL}/api/admin/dashboard`;
+  const res = await fetch(url, {
+    headers: { "x-api-key": API_SECRET },
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    throw new Error(`Customer API error: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
 }
 
 export async function getCustomers(options?: ApiOptions): Promise<PaginatedResponse<CustomerRecord>> {
