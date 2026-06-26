@@ -55,6 +55,7 @@ export const getRefundFields = (): FieldDef<RefundRecord>[] => [
 	{
 		label: "Clerk ID",
 		accessorKey: "clerk_id",
+		fullWidth: true,
 		hrefTemplate: "/customer-admin/customers?search={clerk_id}"
 	},
 	{
