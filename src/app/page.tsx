@@ -92,7 +92,7 @@ function SignedInDashboard() {
 		{
 			name: "App Conductores (Tower)",
 			description: "Plataforma para los conductores de grúas que atienden los servicios.",
-			href: "/tower",
+			href: "/tower-system",
 			icon: (
 				<svg className="w-8 h-8 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
