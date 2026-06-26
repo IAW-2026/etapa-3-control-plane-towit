@@ -5,6 +5,7 @@ interface ApiOptions {
   page?: number;
   limit?: number;
   search?: string;
+  clerkId?: string;
   status?: string;
   sort?: string;
 }
@@ -14,6 +15,7 @@ async function fetchApi<T>(path: string, options?: ApiOptions): Promise<T> {
   if (options?.page) params.set("page", String(options.page));
   if (options?.limit) params.set("limit", String(options.limit));
   if (options?.search) params.set("search", options.search);
+  if (options?.clerkId) params.set("clerkId", options.clerkId);
   if (options?.status) params.set("status", options.status);
   if (options?.sort) params.set("sort", options.sort);
 
@@ -57,11 +59,18 @@ export interface CustomerRecord {
 
 export interface TripRecord {
   tripId: number;
-  customerId: number;
-  customerName: string;
+  customer?: {
+    customerId: number;
+    clerkId: string;
+    fullName: string;
+    isActive: boolean;
+  };
   vehicleId: number;
-  towerId?: number;
+  vehicleBrand?: string;
+  vehicleModel?: string;
+  towerId?: string;
   driverName?: string;
+  driverClerkId?: string;
   originChar: string;
   destinationChar: string;
   date: string;
@@ -88,7 +97,15 @@ export interface PaginatedResponse<T> {
 }
 
 export async function getDashboard(): Promise<DashboardData> {
-  return fetchApi<DashboardData>("/dashboard");
+  const url = `${CUSTOMER_APP_URL}/api/admin/dashboard`;
+  const res = await fetch(url, {
+    headers: { "x-api-key": API_SECRET },
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    throw new Error(`Customer API error: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
 }
 
 export async function getCustomers(options?: ApiOptions): Promise<PaginatedResponse<CustomerRecord>> {

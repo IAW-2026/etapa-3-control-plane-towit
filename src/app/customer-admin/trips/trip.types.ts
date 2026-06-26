@@ -1,10 +1,17 @@
 export interface TripRecord {
 	tripId: number;
-	customerId: number;
-	customerName: string;
+	customer?: {
+		customerId: number;
+		clerkId: string;
+		fullName: string;
+		isActive: boolean;
+	};
 	vehicleId: number;
-	towerId?: number;
+	vehicleBrand?: string;
+	vehicleModel?: string;
+	towerId?: string;
 	driverName?: string;
+	driverClerkId?: string;
 	originChar: string;
 	destinationChar: string;
 	date: string;

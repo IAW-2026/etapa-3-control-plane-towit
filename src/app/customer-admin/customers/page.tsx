@@ -51,7 +51,14 @@ export default async function CustomersPage(props: PageProps) {
   const statusFilter = (searchParams.status as string) || undefined;
   const sort = (searchParams.sort as string) || undefined;
 
-  const { data: paginated, total: totalCount } = await getCustomers({ page, limit, search: searchQuery, status: statusFilter, sort });
+  // Fetch sin search si es un clerkId, para poder filtrar localmente
+  const apiSearch = searchQuery?.startsWith('user_') ? undefined : searchQuery;
+  let { data: paginated, total: totalCount } = await getCustomers({ page, limit, search: apiSearch, status: statusFilter, sort });
+
+  if (searchQuery && searchQuery.startsWith('user_')) {
+    paginated = paginated.filter(c => c.clerkId === searchQuery);
+    totalCount = paginated.length;
+  }
 
   const totalPages = Math.ceil(Number(totalCount) / limit);
 

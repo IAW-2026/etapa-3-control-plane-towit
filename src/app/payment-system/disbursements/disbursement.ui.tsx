@@ -52,7 +52,8 @@ export const getDisbursementFields = (): FieldDef<DisbursementRecord>[] => [
 	{
 		label: "Clerk ID",
 		accessorKey: "clerk_id",
-		hrefTemplate: "/tower-system/towers?search={clerk_id}"
+		fullWidth: true,
+		hrefTemplate: "/tower-system/users?search={clerk_id}"
 	},
 	{
 		label: "Fecha",

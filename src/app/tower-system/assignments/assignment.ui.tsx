@@ -1,5 +1,6 @@
 import { FieldDef } from "@/component/CardDataView";
 import { AssignmentRecord } from "./assignment.types";
+import Link from "next/link";
 
 export const getAssignmentFields = (): FieldDef<AssignmentRecord>[] => [
 	{
@@ -9,15 +10,27 @@ export const getAssignmentFields = (): FieldDef<AssignmentRecord>[] => [
 	},
 	{
 		label: "ID de Viaje",
-		accessorKey: "trip_id",
+		cell: (row) => (
+			<Link href={`/customer-admin/trips?search=${row.trip_id}`} className="text-indigo-600 hover:text-indigo-800 hover:underline">
+				{row.trip_id}
+			</Link>
+		)
 	},
 	{
 		label: "ID de Tower",
-		accessorKey: "tower_id",
+		cell: (row) => (
+			<Link href={`/tower-system/users?search=${row.clerk_id}`} className="text-indigo-600 hover:text-indigo-800 hover:underline">
+				{row.tower_id}
+			</Link>
+		)
 	},
 	{
 		label: "Clerk ID (Tower)",
-		cell: (row) => <span className="font-mono text-xs text-slate-500" title={row.clerk_id}>{row.clerk_id ? row.clerk_id.substring(0, 12) + '...' : 'N/A'}</span>
+		cell: (row) => (
+            <Link href={`/tower-system/users?search=${row.clerk_id}`} className="font-mono text-xs text-indigo-600 hover:text-indigo-800 hover:underline" title={row.clerk_id}>
+                {row.clerk_id ? row.clerk_id.substring(0, 12) + '...' : 'N/A'}
+            </Link>
+        )
 	},
 	{
 		label: "Estado",

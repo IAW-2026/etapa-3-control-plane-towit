@@ -81,7 +81,7 @@ function SignedInDashboard() {
 		{
 			name: "App Clientes (Customer)",
 			description: "Sistema para los usuarios que solicitan servicios de grúa (Riders).",
-			href: "/customer-admin",
+			href: "https://towit-customerview.vercel.app/",
 			icon: (
 				<svg className="w-8 h-8 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -92,7 +92,7 @@ function SignedInDashboard() {
 		{
 			name: "App Conductores (Tower)",
 			description: "Plataforma para los conductores de grúas que atienden los servicios.",
-			href: "/tower",
+			href: "https://proyecto-a-driver2-towit.vercel.app/",
 			icon: (
 				<svg className="w-8 h-8 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -104,7 +104,7 @@ function SignedInDashboard() {
 		{
 			name: "Sistema de Pagos (Payments)",
 			description: "Audita, procesa y visualiza transacciones financieras y liquidaciones.",
-			href: "/payment-system",
+			href: "https://payments-towit-six.vercel.app/",
 			icon: (
 				<svg className="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -115,7 +115,7 @@ function SignedInDashboard() {
 		{
 			name: "Sistema de Feedback",
 			description: "Califica los servicios y visualiza los perfiles de calificaciones.",
-			href: "/feedback-system",
+			href: "https://proyecto-a-feedback2-towit.vercel.app/",
 			icon: (
 				<svg className="w-8 h-8 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />

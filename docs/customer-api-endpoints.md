@@ -30,11 +30,157 @@ Devuelve KPIs generales y los últimos 10 viajes.
 ### Response
 
 ```typescript
-interface DashboardResponse {
-  tripCount: number;
-  customerCount: number;
-  vehicleCount: number;
-  recentTrips: RecentTrip[];
+PaginatedResponse<{
+  tripId: number;
+  customerId: number;
+  customerName: string;
+  clerkId: string;
+  vehicleId: number;
+  vehicleBrand: string;
+  vehicleModel: string;
+  towerId: number | null;
+  originChar: string;
+  destinationChar: string;
+  date: string;
+  time: string;
+  status: string;
+}>
+```
+
+### Código de ejemplo
+
+```typescript
+// app/api/admin/trips/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { validateApiKey } from "@/lib/api-auth";
+import { db } from "@/db";
+import { trip, customer, vehicle } from "@/db/schema";
+import { eq, ilike, and, or, desc, sql } from "drizzle-orm";
+
+export async function GET(request: NextRequest) {
+  if (!validateApiKey(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const page = Math.max(1, Number(searchParams.get("page")) || 1);
+  const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit")) || 25));
+  const search = searchParams.get("search") || undefined;
+  const status = searchParams.get("status") || undefined;
+
+  const conditions = [];
+  if (search) {
+    conditions.push(
+      or(
+        ilike(trip.origin_char, `%${search}%`),
+        ilike(trip.destination_char, `%${search}%`),
+        ilike(customer.full_name, `%${search}%`),
+        sql`${trip.trip_id}::text ILIKE ${`%${search}%`}`
+      )
+    );
+  }
+  if (status && status !== "ALL") {
+    conditions.push(eq(trip.status, status));
+  }
+
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const [totalResult] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(trip)
+    .leftJoin(customer, eq(trip.customer_id, customer.customer_id))
+    .where(where);
+
+  const data = await db
+    .select({
+      tripId: trip.trip_id,
+      customerId: trip.customer_id,
+      customerName: customer.full_name,
+      clerkId: customer.clerk_id,
+      vehicleId: trip.vehicle_id,
+      vehicleBrand: vehicle.brand,
+      vehicleModel: vehicle.model,
+      towerId: trip.tower_id,
+      originChar: trip.origin_char,
+      destinationChar: trip.destination_char,
+      date: trip.date,
+      time: trip.time,
+      status: trip.status,
+    })
+    .from(trip)
+    .leftJoin(customer, eq(trip.customer_id, customer.customer_id))
+    .leftJoin(vehicle, eq(trip.vehicle_id, vehicle.vehicle_id))
+    .where(where)
+    .offset((page - 1) * limit)
+    .limit(limit)
+    .orderBy(desc(trip.date), desc(trip.time));
+
+  return NextResponse.json({
+    data,
+    total: Number(totalResult.count),
+    page,
+    limit,
+  });
+}
+
+  const { searchParams } = new URL(request.url);
+  const page = Math.max(1, Number(searchParams.get("page")) || 1);
+  const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit")) || 25));
+  const search = searchParams.get("search") || undefined;
+  const status = searchParams.get("status") || undefined;
+
+  const conditions = [];
+  if (search) {
+    conditions.push(
+      or(
+        ilike(trip.origin_char, `%${search}%`),
+        ilike(trip.destination_char, `%${search}%`),
+        ilike(customer.full_name, `%${search}%`),
+        sql`${trip.trip_id}::text ILIKE ${`%${search}%`}`
+      )
+    );
+  }
+  if (status && status !== "ALL") {
+    conditions.push(eq(trip.status, status));
+  }
+
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const [totalResult] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(trip)
+    .leftJoin(customer, eq(trip.customer_id, customer.customer_id))
+    .where(where);
+
+  const data = await db
+    .select({
+      tripId: trip.trip_id,
+      customerId: trip.customer_id,
+      customerName: customer.full_name,
+      vehicleId: trip.vehicle_id,
+      vehicleBrand: vehicle.brand,
+      vehicleModel: vehicle.model,
+      towerId: trip.tower_id,
+      originChar: trip.origin_char,
+      destinationChar: trip.destination_char,
+      date: trip.date,
+      time: trip.time,
+      status: trip.status,
+    })
+    .from(trip)
+    .leftJoin(customer, eq(trip.customer_id, customer.customer_id))
+    .leftJoin(vehicle, eq(trip.vehicle_id, vehicle.vehicle_id))
+    .where(where)
+    .offset((page - 1) * limit)
+    .limit(limit)
+    .orderBy(desc(trip.date), desc(trip.time));
+
+  return NextResponse.json({
+    data,
+    total: Number(totalResult.count),
+    page,
+    limit,
+  });
 }
 
 interface RecentTrip {
@@ -131,7 +277,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateApiKey } from "@/lib/api-auth";
 import { db } from "@/db";
 import { customer } from "@/db/schema";
-import { eq, ilike, and, sql } from "drizzle-orm";
+import { eq, ilike, and, or, sql } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
   if (!validateApiKey(request)) {
@@ -146,7 +292,13 @@ export async function GET(request: NextRequest) {
 
   const conditions = [];
   if (search) {
-    conditions.push(ilike(customer.full_name, `%${search}%`));
+    conditions.push(
+      or(
+        ilike(customer.full_name, `%${search}%`),
+        ilike(customer.clerk_id, `%${search}%`),
+        sql`${customer.customer_id}::text ILIKE ${`%${search}%`}`
+      )
+    );
   }
   if (status === "ACTIVE") {
     conditions.push(eq(customer.is_active, true));
@@ -206,7 +358,11 @@ PaginatedResponse<{
   tripId: number;
   customerId: number;
   customerName: string;
+  clerkId: string;
   vehicleId: number;
+  vehicleBrand: string;
+  vehicleModel: string;
+  towerId: number | null;
   originChar: string;
   destinationChar: string;
   date: string;
@@ -222,7 +378,7 @@ PaginatedResponse<{
 import { NextRequest, NextResponse } from "next/server";
 import { validateApiKey } from "@/lib/api-auth";
 import { db } from "@/db";
-import { trip, customer } from "@/db/schema";
+import { trip, customer, vehicle } from "@/db/schema";
 import { eq, ilike, and, or, desc, sql } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
@@ -264,7 +420,11 @@ export async function GET(request: NextRequest) {
       tripId: trip.trip_id,
       customerId: trip.customer_id,
       customerName: customer.full_name,
+      clerkId: customer.clerk_id,
       vehicleId: trip.vehicle_id,
+      vehicleBrand: vehicle.brand,
+      vehicleModel: vehicle.model,
+      towerId: trip.tower_id,
       originChar: trip.origin_char,
       destinationChar: trip.destination_char,
       date: trip.date,
@@ -273,6 +433,7 @@ export async function GET(request: NextRequest) {
     })
     .from(trip)
     .leftJoin(customer, eq(trip.customer_id, customer.customer_id))
+    .leftJoin(vehicle, eq(trip.vehicle_id, vehicle.vehicle_id))
     .where(where)
     .offset((page - 1) * limit)
     .limit(limit)
@@ -299,7 +460,7 @@ Lista paginada de vehículos con búsqueda.
 |----------|--------|---------|------------------------------------------------|
 | `page`   | number | 1       | Número de página                               |
 | `limit`  | number | 25      | Items por página                               |
-| `search` | string | —       | Búsqueda en `brand`, `model`, `customer.full_name` |
+| `search` | string | —       | Búsqueda en `brand`, `model`, `customer.full_name`, `vehicle_id` |
 
 ### Response
 
@@ -342,7 +503,8 @@ export async function GET(request: NextRequest) {
         ilike(vehicle.brand, `%${search}%`),
         ilike(vehicle.model, `%${search}%`),
         ilike(customer.full_name, `%${search}%`),
-        sql`${vehicle.year}::text ILIKE ${`%${search}%`}`
+        sql`${vehicle.year}::text ILIKE ${`%${search}%`}`,
+        sql`${vehicle.vehicle_id}::text ILIKE ${`%${search}%`}`
       )
     );
   }

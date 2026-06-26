@@ -55,7 +55,7 @@ export const getCustomerViewActions = (
 				}
 
 				const targetStatus = !record.isActive;
-				const result = await toggleCustomerStatusAction(record.customerId, targetStatus);
+				const result = await toggleCustomerStatusAction(record.customerId, targetStatus, record.clerkId);
 
 				if (result.ok) {
 					successCount++;

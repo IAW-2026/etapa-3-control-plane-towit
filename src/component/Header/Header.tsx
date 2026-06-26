@@ -71,9 +71,9 @@ export default async function Header() {
 										</svg>
 									}
 									items={[
-										{ label: "Dashboard", href: "/feedback-system", colorClass: "bg-purple-600" },
-										{ label: "Reseñas", href: "/feedback-system/reviews", colorClass: "bg-fuchsia-600" },
-										{ label: "Métricas", href: "/feedback-system/metrics", colorClass: "bg-pink-600" },
+										{ label: "Calificaciones", href: "/feedback-system/ratings", colorClass: "bg-yellow-500" },
+										{ label: "Reportes", href: "/feedback-system/reports", colorClass: "bg-red-600" },
+										{ label: "Promedios", href: "/feedback-system/avg-ratings", colorClass: "bg-pink-600" },
 									]}
 								/>
 							</>
