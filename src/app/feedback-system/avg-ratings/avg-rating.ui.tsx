@@ -33,9 +33,10 @@ export const getAvgRatingFields = (): FieldDef<AvgRatingRecord>[] => [
 		label: "Clerk ID",
 		cell: (row) => (
 			<span className="font-mono text-xs text-slate-500" title={row.clerkId}>
-				{row.clerkId.length > 12 ? `${row.clerkId.slice(0, 12)}...` : row.clerkId}
+				{row.clerkId.length}
 			</span>
 		),
+		fullWidth: true,
 	},
 	{
 		label: "Calificación Promedio",

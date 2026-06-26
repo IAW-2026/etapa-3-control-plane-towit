@@ -12,10 +12,8 @@ export const DISBURSEMENT_SORT_OPTIONS: ControlOption[] = [
 
 export const DISBURSEMENT_FILTER_OPTIONS: ControlOption[] = [
 	{ label: "Todos los estados", value: "ALL" },
-	{ label: "Pendiente", value: "PENDING" },
 	{ label: "Completado", value: "COMPLETED" },
 	{ label: "Cancelado", value: "CANCELLED" },
-	{ label: "Reembolsado", value: "REFUNDED" },
 ];
 
 export const getDisbursementFields = (): FieldDef<DisbursementRecord>[] => [
@@ -49,9 +47,13 @@ export const getDisbursementFields = (): FieldDef<DisbursementRecord>[] => [
 		label: "Viaje (Trip ID)",
 		accessorKey: "trip_id",
 		fullWidth: true,
-		hrefTemplate: "/payment-system/disbursements?search={trip_id}"
+		hrefTemplate: "/customer-admin/trips?search={trip_id}"
 	},
-	{ label: "Clerk ID", accessorKey: "clerk_id" },
+	{
+		label: "Clerk ID",
+		accessorKey: "clerk_id",
+		hrefTemplate: "/tower-system/towers?search={clerk_id}"
+	},
 	{
 		label: "Fecha",
 		cell: (row) => (
