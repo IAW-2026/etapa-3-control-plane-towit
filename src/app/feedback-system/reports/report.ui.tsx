@@ -80,6 +80,7 @@ export const getReportFields = (): FieldDef<ReportRecord>[] => [
 		cell: (row) => (
 			<span className="font-mono text-xs text-slate-500">{row.tripId}</span>
 		),
+		hrefTemplate: "/customer-admin/trips?search={trip_id}"
 	},
 	{
 		label: "Fecha",

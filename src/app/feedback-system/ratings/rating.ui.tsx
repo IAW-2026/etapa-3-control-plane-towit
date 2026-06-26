@@ -86,6 +86,7 @@ export const getRatingFields = (): FieldDef<RatingRecord>[] => [
 		cell: (row) => (
 			<span className="font-mono text-xs text-slate-500">{row.tripId}</span>
 		),
+		hrefTemplate: "/customer-admin/trips?search={trip_id}"
 	},
 	{
 		label: "Fecha",
