@@ -98,14 +98,14 @@ export const getReportFields = (): FieldDef<ReportRecord>[] => [
 	{
 		label: "Reportado por",
 		cell: (row) => (
-			<span className="font-mono text-xs text-slate-500" title={row.reporterClerkId}>{row.reporterClerkId.length}</span>
+			<span className="font-mono text-xs text-slate-500" title={row.reporterClerkId}>{row.reporterClerkId}</span>
 		),
 		fullWidth: true,
 	},
 	{
 		label: "Reportado",
 		cell: (row) => (
-			<span className="font-mono text-xs text-slate-500" title={row.reportedClerkId}>{row.reportedClerkId.length}</span>
+			<span className="font-mono text-xs text-slate-500" title={row.reportedClerkId}>{row.reportedClerkId}</span>
 		),
 		fullWidth: true,
 	},
