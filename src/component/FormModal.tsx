@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 
-export type FormFieldType = 'text' | 'number' | 'email';
+export type FormFieldType = 'text' | 'number' | 'email' | 'boolean';
 
 export interface FormFieldDef {
 	name: string;
@@ -20,6 +20,7 @@ interface DynamicFormModalProps {
 	submitText?: string;
 	onSubmit: (formData: Record<string, any>) => Promise<{ success: boolean; message: string }>;
 	onClose: () => void;
+	initialData?: Record<string, string>;
 }
 
 export default function DynamicFormModal({
@@ -29,9 +30,10 @@ export default function DynamicFormModal({
 	fields,
 	submitText = "Guardar",
 	onSubmit,
-	onClose
+	onClose,
+	initialData
 }: DynamicFormModalProps) {
-	const [formData, setFormData] = useState<Record<string, string>>({});
+	const [formData, setFormData] = useState<Record<string, string>>(initialData || {});
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -42,13 +44,13 @@ export default function DynamicFormModal({
 		return () => { document.body.style.overflow = 'unset'; }
 	}, [isOpen]);
 
-	// Resetear el formulario al abrir/cerrar
+	// Resetear el formulario al abrir/cerrar o si initialData cambia
 	useEffect(() => {
 		if (isOpen) {
-			setFormData({});
+			setFormData(initialData || {});
 			setErrorMsg(null);
 		}
-	}, [isOpen]);
+	}, [isOpen, initialData]);
 
 	if (!isOpen) return null;
 
@@ -100,20 +102,40 @@ export default function DynamicFormModal({
 				<form onSubmit={handleSubmit} className="space-y-4">
 					{fields.map((field) => (
 						<div key={field.name} className="flex flex-col gap-1.5">
-							<label htmlFor={field.name} className="text-sm font-semibold text-slate-700">
-								{field.label} {field.required && <span className="text-rose-500">*</span>}
-							</label>
-							<input
-								id={field.name}
-								name={field.name}
-								type={field.type}
-								required={field.required}
-								placeholder={field.placeholder}
-								value={formData[field.name] || ''}
-								onChange={handleChange}
-								disabled={isSubmitting}
-								className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors disabled:opacity-50"
-							/>
+							{field.type === 'boolean' ? (
+								<div className="flex items-center justify-between mt-2 mb-1">
+									<label htmlFor={field.name} className="text-sm font-semibold text-slate-700">
+										{field.label} {field.required && <span className="text-rose-500">*</span>}
+									</label>
+									<button
+										type="button"
+										role="switch"
+										aria-checked={formData[field.name] === 'true'}
+										disabled={isSubmitting}
+										onClick={() => setFormData(prev => ({ ...prev, [field.name]: prev[field.name] === 'true' ? 'false' : 'true' }))}
+										className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${formData[field.name] === 'true' ? 'bg-indigo-600' : 'bg-slate-200'} disabled:opacity-50`}
+									>
+										<span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData[field.name] === 'true' ? 'translate-x-6' : 'translate-x-1'}`} />
+									</button>
+								</div>
+							) : (
+								<>
+									<label htmlFor={field.name} className="text-sm font-semibold text-slate-700">
+										{field.label} {field.required && <span className="text-rose-500">*</span>}
+									</label>
+									<input
+										id={field.name}
+										name={field.name}
+										type={field.type}
+										required={field.required}
+										placeholder={field.placeholder}
+										value={formData[field.name] || ''}
+										onChange={handleChange}
+										disabled={isSubmitting}
+										className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors disabled:opacity-50"
+									/>
+								</>
+							)}
 						</div>
 					))}
 
