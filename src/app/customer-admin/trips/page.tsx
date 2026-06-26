@@ -46,22 +46,9 @@ export default async function TripsPage(props: PageProps) {
 
   const { data: paginated, total: totalCount } = await getTrips({ page, limit, search: searchQuery, status: statusFilter });
 
-  const paginatedWithDriver = await Promise.all(
-    paginated.map(async (trip) => {
-      const rawTowerId = (trip as unknown as Record<string, unknown>).towerId ?? (trip as unknown as Record<string, unknown>).tower_id;
-      const towerId = Number(rawTowerId);
-      if (rawTowerId && !isNaN(towerId)) {
-        const info = await getDriverInfo(towerId);
-        return { ...trip, driverName: info?.name ?? undefined, driverClerkId: info?.clerkId ?? undefined };
-      }
-      if (rawTowerId && isNaN(towerId)) {
-        console.error(`Invalid towerId value for trip #${trip.tripId}:`, rawTowerId);
-      }
-      return trip;
-    })
-  );
-
   const totalPages = Math.ceil(Number(totalCount) / limit);
+
+  console.log(paginated[0]);
 
   return (
     <div className="max-w-7xl mx-auto p-8">
@@ -70,7 +57,7 @@ export default async function TripsPage(props: PageProps) {
         <p className="text-gray-500 text-sm mt-1">Visualiza y administra los viajes solicitados por los clientes.</p>
       </div>
 
-      <TripsClient data={sortData(paginatedWithDriver, sort)} />
+      <TripsClient data={sortData(paginated, sort)} />
 
       {totalPages > 0 && (
         <PaginationControls totalPages={totalPages} currentPage={page} />

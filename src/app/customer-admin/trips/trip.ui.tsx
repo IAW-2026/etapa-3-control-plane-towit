@@ -48,13 +48,15 @@ export const getTripFields = (): FieldDef<TripRecord>[] => [
 		isPrimary: true,
 	},
 	{
-		label: "Cliente",
-		cell: (row) => {
-			const clerk = row.clerkId ?? (row as unknown as Record<string, unknown>).clerk_id;
-			if (!clerk) return <span className="text-sm text-slate-700">{row.customerName}</span>;
-			return <span className="font-mono text-sm text-slate-700">{String(clerk)}</span>;
-		},
-		hrefTemplate: "/customer-admin/customers?search={clerkId}",
+		label: "Cliente (Clerk ID)",
+		cell: (row) => (
+			<div className="flex flex-col">
+				<span className="text-sm text-slate-700">{row.customer?.clerkId || <span className="text-slate-400 italic">No disponible</span>}</span>
+				{row.customer?.fullName && <span className="text-xs text-slate-500">{row.customer?.fullName}</span>}
+			</div>
+		),
+		hrefTemplate: "/customer-admin/customers?search={customer.clerkId}",
+		fullWidth: true,
 	},
 	{
 		label: "Vehículo",
@@ -66,12 +68,17 @@ export const getTripFields = (): FieldDef<TripRecord>[] => [
 		hrefTemplate: "/customer-admin/vehicles?search={vehicleId}",
 	},
 	{
-		label: "Conductor",
+		label: "Conductor (Clerk ID)",
 		cell: (row) => {
-			if (!row.driverClerkId && !row.driverName) return <span className="text-xs text-slate-400 italic">—</span>;
-			const display = row.driverClerkId || row.driverName;
-			return <span className="font-mono text-sm text-slate-700">{display}</span>;
+			const driverId = row.driverClerkId || row.towerId;
+			return (
+				<div className="flex flex-col">
+					<span className="text-sm text-slate-700">{driverId || <span className="text-slate-400 italic">No asignado</span>}</span>
+					{row.driverName && <span className="text-xs text-slate-500">{row.driverName}</span>}
+				</div>
+			);
 		},
+		fullWidth: true,
 	},
 	{
 		label: "Origen",
