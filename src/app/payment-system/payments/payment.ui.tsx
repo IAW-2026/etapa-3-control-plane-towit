@@ -44,9 +44,13 @@ export const getPaymentFields = (): FieldDef<PaymentRecord>[] => [
 		label: "Viaje (Trip ID)",
 		accessorKey: "trip_id",
 		fullWidth: true,
-		hrefTemplate: "/payment-system/payments?search={trip_id}"
+		hrefTemplate: "/customer-admin/trips?search={trip_id}"
 	},
-	{ label: "Clerk ID", accessorKey: "clerk_id" },
+	{
+		label: "Clerk ID",
+		accessorKey: "clerk_id",
+		hrefTemplate: "/customer-admin/customers?search={clerk_id}"
+	},
 	{
 		label: "ID Externo (MP)",
 		cell: (row) => <span className="font-mono text-xs text-slate-400">{row.external_id || 'N/A'}</span>,

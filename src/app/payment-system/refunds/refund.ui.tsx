@@ -12,7 +12,6 @@ export const REFUND_SORT_OPTIONS: ControlOption[] = [
 
 export const REFUND_FILTER_OPTIONS: ControlOption[] = [
 	{ label: "Todos los estados", value: "ALL" },
-	{ label: "Pendiente", value: "PENDING" },
 	{ label: "Completado", value: "COMPLETED" },
 	{ label: "Cancelado", value: "CANCELLED" },
 ];
@@ -51,9 +50,13 @@ export const getRefundFields = (): FieldDef<RefundRecord>[] => [
 		label: "Viaje (Trip ID)",
 		accessorKey: "trip_id",
 		fullWidth: true,
-		hrefTemplate: "/payment-system/refunds?search={trip_id}"
+		hrefTemplate: "/customer-admin/trips?search={trip_id}"
 	},
-	{ label: "Clerk ID", accessorKey: "clerk_id" },
+	{
+		label: "Clerk ID",
+		accessorKey: "clerk_id",
+		hrefTemplate: "/customer-admin/customers?search={clerk_id}"
+	},
 	{
 		label: "Fecha",
 		cell: (row) => (
