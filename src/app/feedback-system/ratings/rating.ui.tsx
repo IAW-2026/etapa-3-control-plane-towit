@@ -104,17 +104,19 @@ export const getRatingFields = (): FieldDef<RatingRecord>[] => [
 		label: "Calificador",
 		cell: (row) => (
 			<span className="font-mono text-xs text-slate-500" title={row.raterClerkId}>
-				{row.raterClerkId.length > 12 ? `${row.raterClerkId.slice(0, 12)}...` : row.raterClerkId}
+				{row.raterClerkId}
 			</span>
 		),
+		fullWidth: true,
 	},
 	{
 		label: "Calificado",
 		cell: (row) => (
 			<span className="font-mono text-xs text-slate-500" title={row.ratedClerkId}>
-				{row.ratedClerkId.length > 12 ? `${row.ratedClerkId.slice(0, 12)}...` : row.ratedClerkId}
+				{row.ratedClerkId}
 			</span>
 		),
+		fullWidth: true,
 	},
 	
 ];
