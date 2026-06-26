@@ -159,6 +159,25 @@ export async function updateAdminAction(adminId: string, formData: Record<string
             return { success: false, code: errorData?.error || 'UNKNOWN_ERROR' };
         }
 
+        if (payload.deactivated !== undefined) {
+            const getRes = await fetch(`${baseUrl}/api/tower/admins/${adminId}`, { headers: { 'x-api-key': process.env.INTERNAL_API_SECRET || '' }});
+            if (getRes.ok) {
+                const data = await getRes.json();
+                const clerkId = data?.data?.clerk_id;
+                const paymentsUrl = process.env.PAYMENTS_SYSTEM_URL;
+                if (clerkId && paymentsUrl) {
+                    fetch(`${paymentsUrl}/api/users`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${process.env.INTERNAL_API_SECRET || ''}`
+                        },
+                        body: JSON.stringify({ clerkId, isBanned: payload.deactivated })
+                    }).catch(e => console.error("Error notifying payments system:", e));
+                }
+            }
+        }
+
         revalidatePath('/tower-system/admins');
         return { success: true };
 
@@ -185,6 +204,23 @@ export async function deleteAdminAction(adminId: string): Promise<ActionResponse
         if (!res.ok) {
             const data = await res.json().catch(() => ({}));
             return { success: false, code: data?.error || 'UNKNOWN_ERROR' };
+        }
+
+        const getRes = await fetch(`${baseUrl}/api/tower/admins/${adminId}`, { headers: { 'x-api-key': process.env.INTERNAL_API_SECRET || '' }});
+        if (getRes.ok) {
+            const data = await getRes.json();
+            const clerkId = data?.data?.clerk_id;
+            const paymentsUrl = process.env.PAYMENTS_SYSTEM_URL;
+            if (clerkId && paymentsUrl) {
+                fetch(`${paymentsUrl}/api/users`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${process.env.INTERNAL_API_SECRET || ''}`
+                    },
+                    body: JSON.stringify({ clerkId, isBanned: true })
+                }).catch(e => console.error("Error notifying payments system:", e));
+            }
         }
 
         revalidatePath('/tower-system/admins');
