@@ -1,4 +1,5 @@
 import UsersClient from "./UsersClient";
+import UsersCrossTable from "./UsersCrossTable";
 import PaginationControls from "@/component/PaginationControls";
 import { TowerRecord } from "./user.types";
 import { getUsersAction } from "@/actions/tower-system/user.actions";
@@ -51,7 +52,11 @@ export default async function UsersPage(props: PageProps) {
                 <p className="text-gray-500 text-sm mt-1">Selecciona un usuario para aplicar operaciones y gestionar sus permisos.</p>
             </div>
 
-            <UsersClient data={paginatedUsers} />
+            <UsersCrossTable />
+
+            <div id="management-section" className="scroll-mt-8">
+                <UsersClient data={paginatedUsers} />
+            </div>
 
             {totalPages > 0 && (
                 <PaginationControls totalPages={totalPages} currentPage={page} />
