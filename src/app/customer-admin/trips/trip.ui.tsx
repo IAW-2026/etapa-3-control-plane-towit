@@ -50,6 +50,19 @@ export const getTripFields = (): FieldDef<TripRecord>[] => [
 	{
 		label: "Cliente",
 		accessorKey: "customerName",
+		hrefTemplate: "/customer-admin/customers?search={customerName}",
+	},
+	{
+		label: "Vehículo",
+		cell: (row) => <span className="text-sm text-slate-700">#{row.vehicleId}</span>,
+		hrefTemplate: "/customer-admin/vehicles?search={customerName}",
+	},
+	{
+		label: "Conductor",
+		cell: (row) => {
+			if (!row.driverName) return <span className="text-xs text-slate-400 italic">—</span>;
+			return <span className="text-sm text-slate-700">{row.driverName}</span>;
+		},
 	},
 	{
 		label: "Origen",

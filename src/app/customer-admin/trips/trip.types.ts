@@ -3,6 +3,8 @@ export interface TripRecord {
 	customerId: number;
 	customerName: string;
 	vehicleId: number;
+	towerId?: number;
+	driverName?: string;
 	originChar: string;
 	destinationChar: string;
 	date: string;
