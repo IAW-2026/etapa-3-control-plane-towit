@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 const CUSTOMER_APP_URL = process.env.NEXT_PUBLIC_CUSTOMER_APP_URL || "https://towit-customerview.vercel.app";
 const API_SECRET = process.env.INTERNAL_API_SECRET || "";
 
-export async function toggleCustomerStatusAction(customerId: number, isActive: boolean) {
+export async function toggleCustomerStatusAction(customerId: number, isActive: boolean, clerkId?: string) {
 	try {
 		const patchRes = await fetch(`${CUSTOMER_APP_URL}/api/admin/customers/${customerId}`, {
 			method: 'PATCH',
@@ -23,6 +23,20 @@ export async function toggleCustomerStatusAction(customerId: number, isActive: b
 				ok: false,
 				data: { code: "PATCH_FAILED", error: patchData?.error || "Error al actualizar el estado del cliente." }
 			};
+		}
+
+		if (clerkId) {
+			const paymentsUrl = process.env.PAYMENTS_SYSTEM_URL;
+			if (paymentsUrl) {
+				fetch(`${paymentsUrl}/api/users`, {
+					method: 'PATCH',
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': `Bearer ${API_SECRET}`
+					},
+					body: JSON.stringify({ clerkId, isBanned: !isActive })
+				}).catch(e => console.error("[toggleCustomerStatusAction] Error notifying payments system:", e));
+			}
 		}
 
 		revalidatePath('/customer-admin/customers');
